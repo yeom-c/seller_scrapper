@@ -1,0 +1,39 @@
+# Python #
+###########
+# 가상 환경 (Virtual Environment)
+venv/
+.venv/
+
+# Python 캐시 파일
+__pycache__/
+*.py[cod]
+*$py.class
+
+# egg, dist 등 배포 관련 폴더
+.eggs/
+*.egg-info/
+*.egg
+dist/
+build/
+
+
+# IDE / 편집기 #
+################
+.idea/
+.vscode/
+
+
+# OS 생성 파일 #
+###############
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+
+# 민감 정보 및 결과물 #
+######################
+# 스크레이핑 결과물
+output/
+*.csv
