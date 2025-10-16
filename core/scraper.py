@@ -40,18 +40,10 @@ class WorkflowScraper:
         }
 
     def stop(self):
-        """외부에서 스크레이핑 작업을 중단하도록 요청하고 브라우저를 즉시 종료합니다."""
+        """외부에서 스크레이핑 작업을 중단하도록 요청합니다."""
         if self._is_running:
-            self.log_handler("작업 중단 신호를 받았습니다. 즉시 종료합니다.", "orange")
+            self.log_handler("작업 중단 신호를 받았습니다.", "orange")
             self._is_running = False
-            
-            if self.driver:
-                try:
-                    self.driver.quit()
-                    self.log_handler("WebDriver가 강제 종료되었습니다.", "orange")
-                except Exception:
-                    pass
-                self.driver = None
 
     def run_workflow(self, workflow_data, **kwargs):
         """워크플로우의 모든 단계를 순서대로 실행합니다."""
@@ -80,16 +72,31 @@ class WorkflowScraper:
                         self.step_start_handler(step_name)
                         strategy_class = self.strategy_map[action_type]
                         strategy_instance = strategy_class(self, step, kwargs)
-                        self.collected_data = strategy_instance.execute()
-
-                        if self._is_running and self.collected_data:
+                        
+                        try:
+                            self.collected_data = strategy_instance.execute()
+                        except Exception as strategy_error:
+                            self.log_handler(f"스크래핑 중 오류 발생: {strategy_error}", "red")
+                            # 오류가 발생해도 수집된 데이터가 있으면 저장
+                            self.collected_data = strategy_instance.collected_data
+                        
+                        # 중단되었든 정상 완료되었든, 수집된 데이터가 있으면 저장
+                        if self.collected_data:
                             self.save_collected_data()
+                        else:
+                            self.log_handler("수집된 데이터가 없습니다.", "orange")
                     else:
                         self.log_handler(f"경고: 알 수 없는 action_type '{action_type}'입니다.", "orange")
                 
                 except Exception as e:
                     if self._is_running:
                         self.log_handler(f"❌ '{step_name}' 작업 중 오류가 발생했습니다: {e}", "red")
+                    # 예외 발생 시에도 수집된 데이터가 있으면 저장 시도
+                    if self.collected_data:
+                        try:
+                            self.save_collected_data()
+                        except Exception as save_error:
+                            self.log_handler(f"데이터 저장 중 오류: {save_error}", "red")
             
         finally:
             self.close()
@@ -162,11 +169,7 @@ class WorkflowScraper:
         self.log_handler("이동 완료.", "black")
     
     def close(self):
-        """WebDriver를 안전하게 종료하고, 남은 데이터가 있으면 저장합니다."""
-        if not self._is_running and self.collected_data:
-            self.log_handler(f"\n작업이 중단되었습니다. 지금까지 수집된 {len(self.collected_data)}개의 데이터를 저장합니다...", "orange")
-            self.save_collected_data()
-
+        """WebDriver를 안전하게 종료합니다."""
         if self.driver:
             try:
                 self.driver.quit()

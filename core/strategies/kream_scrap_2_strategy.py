@@ -53,7 +53,9 @@ class KreamScrap2Strategy(ScrapingStrategy):
 
         rules = self.step_details.get('detail_rules', {})
         for i, item_info in enumerate(filtered_items):
-            if not self.scraper._is_running: break
+            if not self.scraper._is_running:
+                self.log_handler(f"작업 중단 요청됨. 현재까지 {len(self.collected_data)}개 데이터 수집 완료.", "orange")
+                break
 
             self.progress_handler(i + 1, total_items)
             self.log_handler(f"  - 아이템 {i+1}/{len(filtered_items)} 상세 정보 스크래핑 중...", "black")
@@ -81,9 +83,16 @@ class KreamScrap2Strategy(ScrapingStrategy):
                 self.driver.refresh()
                 time.sleep(2)
             except Exception as e:
-                self.log_handler(f"    - 에러 발생: {e}. 다음 아이템으로 넘어갑니다.", "red")
+                # 중단 신호로 인한 WebDriver 오류는 조용히 처리
+                if not self.scraper._is_running:
+                    self.log_handler(f"작업 중단됨. 현재까지 {len(self.collected_data)}개 데이터 수집 완료.", "orange")
+                    break
+                else:
+                    self.log_handler(f"    - 에러 발생: {e}. 다음 아이템으로 넘어갑니다.", "red")
         
         if self.scraper._is_running:
             self.log_handler("모든 상세 정보 스크래핑 완료.", "green")
+        else:
+            self.log_handler(f"작업이 중단되었습니다. 총 {len(self.collected_data)}개 데이터가 수집되었습니다.", "orange")
 
         return self.collected_data

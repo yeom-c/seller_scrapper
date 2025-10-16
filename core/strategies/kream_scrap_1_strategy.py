@@ -53,25 +53,37 @@ class KreamScrap1Strategy(ScrapingStrategy):
 
         rules = self.step_details.get('detail_page_rules', {})
         for i, item_info in enumerate(filtered_items):
-            if not self.scraper._is_running: break
+            if not self.scraper._is_running:
+                self.log_handler(f"작업 중단 요청됨. 현재까지 {len(self.collected_data)}개 데이터 수집 완료.", "orange")
+                break
             
             self.progress_handler(i + 1, total_items)
             url = item_info['url']
             self.log_handler(f"  - 아이템 {i+1}/{len(filtered_items)} 상세 정보 스크래핑 중...", "black")
-            self.driver.get(url)
             
             try:
+                self.driver.get(url)
                 self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, rules['order_number']['selector'])))
+                
+                soup = BeautifulSoup(self.driver.page_source, 'html.parser')
+                item_data = self._parse_item_data(soup, rules)
+                item_data['_date'] = item_info['date']
+                self.collected_data.append(item_data)
             except TimeoutException:
                 self.log_handler("    - 상세 페이지 로딩 시간 초과. 다음 아이템으로 넘어갑니다.", "orange")
                 continue
-            
-            soup = BeautifulSoup(self.driver.page_source, 'html.parser')
-            item_data = self._parse_item_data(soup, rules)
-            item_data['_date'] = item_info['date']
-            self.collected_data.append(item_data)
+            except Exception as e:
+                # 중단 신호로 인한 WebDriver 오류는 조용히 처리
+                if not self.scraper._is_running:
+                    self.log_handler(f"작업 중단됨. 현재까지 {len(self.collected_data)}개 데이터 수집 완료.", "orange")
+                    break
+                else:
+                    self.log_handler(f"    - 오류 발생: {e}. 다음 아이템으로 넘어갑니다.", "orange")
+                    continue
 
         if self.scraper._is_running:
             self.log_handler("모든 상세 정보 스크래핑 완료.", "green")
+        else:
+            self.log_handler(f"작업이 중단되었습니다. 총 {len(self.collected_data)}개 데이터가 수집되었습니다.", "orange")
         
         return self.collected_data
