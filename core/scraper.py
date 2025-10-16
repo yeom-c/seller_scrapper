@@ -133,8 +133,7 @@ class WorkflowScraper:
             raise  # 예외를 상위로 전파
         
         # 데이터 저장
-        if self.collected_data:
-            self.save_collected_data()
+        self._safe_save_collected_data()
 
     def _safe_save_collected_data(self) -> None:
         """수집된 데이터가 있으면 안전하게 저장합니다."""
