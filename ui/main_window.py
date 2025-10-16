@@ -182,6 +182,9 @@ class MainWindow(QMainWindow):
         if hasattr(tab, 'log_edit'):
             html_message = f'<font color="{color}">{message}</font>'
             tab.log_edit.append(html_message)
+            # 자동 스크롤 다운
+            scrollbar = tab.log_edit.verticalScrollBar()
+            scrollbar.setValue(scrollbar.maximum())
             
     def update_progress(self, current: int, total: int) -> None:
         """프로그레스 바의 값을 업데이트합니다."""
