@@ -15,6 +15,13 @@ block_cipher = None
 # 프로젝트 루트 디렉토리
 root_dir = Path(SPECPATH)
 
+# 아이콘 파일 경로 설정
+icon_file = None
+if sys.platform == 'win32':
+    icon_file = str(root_dir / 'icon.ico')
+elif sys.platform == 'darwin':
+    icon_file = str(root_dir / 'icon.icns')
+
 # 데이터 파일 및 폴더 수집
 datas = [
     (str(root_dir / 'workflows'), 'workflows'),
@@ -72,7 +79,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=None,  # 아이콘 파일이 있으면 경로 지정: 'icon.ico' (Windows) or 'icon.icns' (macOS)
+    icon=icon_file,  # 플랫폼에 맞는 아이콘 자동 적용
 )
 
 coll = COLLECT(
@@ -91,7 +98,7 @@ if sys.platform == 'darwin':
     app = BUNDLE(
         coll,
         name='SellerScrapper.app',
-        icon=None,  # macOS용 아이콘: 'icon.icns'
+        icon=str(root_dir / 'icon.icns'),  # macOS용 아이콘
         bundle_identifier='com.sellerscrapper.app',
         info_plist={
             'NSHighResolutionCapable': 'True',
