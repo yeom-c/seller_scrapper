@@ -3,7 +3,7 @@ from typing import Dict, Optional
 from PySide6.QtCore import QThread
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QTabWidget,
-    QLabel, QTextEdit, QMessageBox
+    QLabel, QTextEdit, QMessageBox, QApplication
 )
 from scraping_worker import ScraperWorker
 from .tabs.kream_tab import KreamTab
@@ -15,7 +15,7 @@ class MainWindow(QMainWindow):
     def __init__(self, workflows_by_permission: Dict[str, str]):
         super().__init__()
         self.setWindowTitle("판매내역 스크래퍼")
-        self.setGeometry(300, 300, 800, 600)
+        self.resize(800, 600)
         self.thread: Optional[QThread] = None
         self.worker: Optional[ScraperWorker] = None
         self._is_closing = False
@@ -24,6 +24,15 @@ class MainWindow(QMainWindow):
         self.authorized_workflows = self._parse_workflows(workflows_by_permission)
         self._create_tabs()
         self._show_parsing_errors()
+        self._center_on_screen()
+
+    def _center_on_screen(self) -> None:
+        """창을 화면 중앙에 배치합니다."""
+        screen = QApplication.primaryScreen().geometry()
+        window_geometry = self.frameGeometry()
+        center_point = screen.center()
+        window_geometry.moveCenter(center_point)
+        self.move(window_geometry.topLeft())
 
     def _setup_ui(self) -> None:
         """UI 구성요소를 설정합니다."""

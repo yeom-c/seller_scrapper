@@ -1,5 +1,5 @@
 from PySide6.QtCore import Signal
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QLabel
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QLabel, QApplication
 
 class LoginWindow(QWidget):
     """로그인 성공 시 워크플로우 데이터를 전송하는 신호를 가진 로그인 창 클래스."""
@@ -9,7 +9,8 @@ class LoginWindow(QWidget):
         """LoginWindow 클래스의 생성자입니다."""
         super().__init__()
         self.setWindowTitle("로그인")
-        self.setGeometry(400, 400, 300, 150)
+        self.resize(300, 150)
+        self._center_on_screen()
 
         layout = QVBoxLayout()
         self.label = QLabel("로그인 화면입니다.")
@@ -20,6 +21,14 @@ class LoginWindow(QWidget):
         self.setLayout(layout)
 
         self.login_button.clicked.connect(self._handle_login)
+
+    def _center_on_screen(self):
+        """창을 화면 중앙에 배치합니다."""
+        screen = QApplication.primaryScreen().geometry()
+        window_geometry = self.frameGeometry()
+        center_point = screen.center()
+        window_geometry.moveCenter(center_point)
+        self.move(window_geometry.topLeft())
 
     def _handle_login(self):
         """로그인 버튼 클릭 시 처리하는 함수 (데이터 구조 시뮬레이션)."""
