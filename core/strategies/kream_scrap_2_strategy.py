@@ -48,9 +48,14 @@ class KreamScrap2Strategy(ScrapingStrategy):
             return []
         self.log_handler(f"총 {len(filtered_items)}개의 필터링된 아이템을 찾았습니다.", "black")
 
+        total_items = len(filtered_items)
+        self.progress_handler(0, total_items)
+
         rules = self.step_details.get('detail_rules', {})
         for i, item_info in enumerate(filtered_items):
             if not self.scraper._is_running: break
+
+            self.progress_handler(i + 1, total_items)
             self.log_handler(f"  - 아이템 {i+1}/{len(filtered_items)} 상세 정보 스크래핑 중...", "black")
             try:
                 detail_button = item_info['element'].find_element(By.CSS_SELECTOR, self.step_details['detail_button_selector'])

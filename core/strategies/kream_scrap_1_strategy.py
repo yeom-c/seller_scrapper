@@ -48,9 +48,14 @@ class KreamScrap1Strategy(ScrapingStrategy):
             return []
         self.log_handler(f"총 {len(filtered_items)}개의 필터링된 아이템 URL을 수집했습니다.", "black")
 
+        total_items = len(filtered_items)
+        self.progress_handler(0, total_items)
+
         rules = self.step_details.get('detail_page_rules', {})
         for i, item_info in enumerate(filtered_items):
             if not self.scraper._is_running: break
+            
+            self.progress_handler(i + 1, total_items)
             url = item_info['url']
             self.log_handler(f"  - 아이템 {i+1}/{len(filtered_items)} 상세 정보 스크래핑 중...", "black")
             self.driver.get(url)

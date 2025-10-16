@@ -1,11 +1,9 @@
 import sys
 import json
 from datetime import datetime
-from PySide6.QtCore import QDate, QThread, Qt
-from PySide6.QtGui import QCursor
+from PySide6.QtCore import QThread
 from PySide6.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QVBoxLayout, QTabWidget,
-    QLabel, QPushButton, QTextEdit, QHBoxLayout, QDateEdit
+    QApplication, QMainWindow, QWidget, QVBoxLayout, QTabWidget, QLabel, QTextEdit
 )
 from scraping_worker import ScraperWorker
 from .tabs.kream_tab import KreamTab
@@ -27,7 +25,6 @@ class MainWindow(QMainWindow):
         self.tabs = QTabWidget()
         main_layout.addWidget(self.tabs)
         
-        # __init__의 파라미터인 workflows_by_permission을 그대로 사용
         self.authorized_workflows = self._parse_workflows(workflows_by_permission)
         self._create_tabs()
 
@@ -83,12 +80,14 @@ class MainWindow(QMainWindow):
         active_tab.start_button.setEnabled(False)
         active_tab.stop_button.setEnabled(True)
         active_tab.log_edit.clear()
+        active_tab.progress_bar.setValue(0)
         self.update_log_on_tab(active_tab, "작업을 준비 중입니다...", "black")
         
         self.thread = QThread()
         self.worker = ScraperWorker(workflow_data, date_range)
         self.worker.moveToThread(self.thread)
-
+        self.worker.step_started.connect(self.on_step_started)
+        self.worker.progress_updated.connect(self.update_progress)
         self.worker.log_message.connect(lambda msg, color: self.update_log_on_tab(self.tabs.currentWidget(), msg, color))
         self.worker.error.connect(lambda msg: self.update_log_on_tab(self.tabs.currentWidget(), msg, "red"))
         self.thread.started.connect(self.worker.run)
@@ -126,3 +125,17 @@ class MainWindow(QMainWindow):
         if hasattr(tab, 'log_edit'):
             html_message = f'<font color="{color}">{message}</font>'
             tab.log_edit.append(html_message)
+
+    def on_step_started(self, step_name):
+        """새로운 스크랩 단계가 시작될 때 프로그레스 바를 리셋합니다."""
+        active_tab = self.tabs.currentWidget()
+        if hasattr(active_tab, 'progress_bar'):
+            active_tab.progress_bar.setValue(0)
+            active_tab.progress_bar.setFormat(f"'{step_name}' 진행 중... %p%")
+            
+    def update_progress(self, current, total):
+        """프로그레스 바의 값을 업데이트합니다."""
+        active_tab = self.tabs.currentWidget()
+        if hasattr(active_tab, 'progress_bar'):
+            active_tab.progress_bar.setMaximum(total)
+            active_tab.progress_bar.setValue(current)

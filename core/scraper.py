@@ -10,18 +10,19 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, StaleElementReferenceException
 from bs4 import BeautifulSoup
-
 from .strategies.kream_scrap_1_strategy import KreamScrap1Strategy
 from .strategies.kream_scrap_2_strategy import KreamScrap2Strategy
-from utils.file_handler import save_to_csv # 유틸리티 함수 import
+from utils.file_handler import save_to_csv
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 class WorkflowScraper:
     """워크플로우의 각 단계를 순차적으로 실행하는 범용 스크레이퍼 엔진."""
     
-    def __init__(self, log_handler):
+    def __init__(self, log_handler, progress_handler, step_start_handler):
         self.log_handler = log_handler
+        self.progress_handler = progress_handler # 진행률 핸들러 추가
+        self.step_start_handler = step_start_handler
         self._is_running = True
         self.collected_data = []
         self.current_step_details = {}
@@ -73,6 +74,9 @@ class WorkflowScraper:
                             break
                     elif action_type in self.strategy_map:
                         self._execute_navigate(step)
+
+                        self.step_start_handler(step_name)
+                        
                         strategy_class = self.strategy_map[action_type]
                         strategy_instance = strategy_class(self, step, kwargs)
                         self.collected_data = strategy_instance.execute()

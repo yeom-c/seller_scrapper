@@ -2,17 +2,12 @@ class ScrapingStrategy:
     """모든 스크레이핑 전략의 기반이 되는 클래스."""
 
     def __init__(self, scraper, step_details, date_range):
-        """
-        전략 클래스 초기화.
-        
-        :param scraper: WorkflowScraper의 인스턴스.
-        :param step_details: 현재 실행 중인 step의 JSON 데이터.
-        :param date_range: 사용자가 선택한 날짜 범위.
-        """
+        """전략 클래스 초기화."""
         self.scraper = scraper
         self.driver = scraper.driver
         self.wait = scraper.wait
         self.log_handler = scraper.log_handler
+        self.progress_handler = scraper.progress_handler # 진행률 핸들러 상속
         self.step_details = step_details
         self.date_range = date_range
         self.collected_data = []

@@ -2,12 +2,11 @@ from PySide6.QtCore import QDate, Signal, Qt
 from PySide6.QtGui import QCursor
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-    QPushButton, QTextEdit, QDateEdit
+    QPushButton, QTextEdit, QDateEdit, QProgressBar
 )
 
 class KreamTab(QWidget):
     """KREAM 탭의 UI와 시그널을 관리하는 독립적인 위젯 클래스."""
-    # 스크레이핑 시작 신호. (워크플로우 데이터, 날짜 범위)를 전달.
     start_scraping_signal = Signal(dict, dict)
 
     def __init__(self, workflow_data):
@@ -19,7 +18,6 @@ class KreamTab(QWidget):
         """탭의 UI 요소들을 생성하고 배치합니다."""
         main_layout = QVBoxLayout(self)
         
-        # 날짜 영역
         date_layout = QHBoxLayout()
         self.start_date_edit = QDateEdit(QDate.currentDate().addMonths(-1))
         self.start_date_edit.setCalendarPopup(True)
@@ -33,7 +31,6 @@ class KreamTab(QWidget):
         date_layout.addWidget(self.end_date_edit)
         date_layout.addStretch()
 
-        # 버튼 영역
         button_layout = QHBoxLayout()
         self.start_button = QPushButton("스크레이핑 시작")
         self.start_button.setFixedHeight(40)
@@ -50,15 +47,18 @@ class KreamTab(QWidget):
         button_layout.addWidget(self.start_button)
         button_layout.addWidget(self.stop_button)
 
-        # 로그 영역
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setValue(0)
+        self.progress_bar.setTextVisible(True)
+
         self.log_edit = QTextEdit()
         self.log_edit.setReadOnly(True)
 
         main_layout.addLayout(date_layout)
         main_layout.addLayout(button_layout)
+        main_layout.addWidget(self.progress_bar)
         main_layout.addWidget(self.log_edit)
 
-        # 버튼 클릭 시그널 연결
         self.start_button.clicked.connect(self._emit_start_signal)
 
     def _emit_start_signal(self):
@@ -67,5 +67,4 @@ class KreamTab(QWidget):
         end_date = self.end_date_edit.date().toPython()
         date_range = {'start_date': start_date, 'end_date': end_date}
         
-        # 메인 윈도우에 스크레이핑 시작을 알림
         self.start_scraping_signal.emit(self.workflow_data, date_range)
