@@ -1,0 +1,72 @@
+import time
+from datetime import datetime
+from selenium.webdriver.common.by import By
+from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.support import expected_conditions as EC
+from bs4 import BeautifulSoup
+from .scraping_strategy import ScrapingStrategy
+
+class KreamScrap1Strategy(ScrapingStrategy):
+    """'일반 판매 내역' 스크레이핑 전략을 담당하는 클래스."""
+
+    def execute(self):
+        start_date = self.date_range.get('start_date')
+        end_date = self.date_range.get('end_date')
+
+        self.log_handler("지정한 기간에 맞춰 페이지를 스크롤합니다...", "black")
+        last_height = self.driver.execute_script("return document.body.scrollHeight")
+        while self.scraper._is_running:
+            self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            time.sleep(2)
+            new_height = self.driver.execute_script("return document.body.scrollHeight")
+            if new_height == last_height: break
+            if start_date:
+                try:
+                    last_item_date_str = self.driver.find_elements(By.CSS_SELECTOR, self.step_details['list_date_selector'])[-1].text
+                    last_item_date = datetime.strptime(last_item_date_str, "%y/%m/%d").date()
+                    if last_item_date < start_date:
+                        self.log_handler("시작일에 도달하여 스크롤을 중단합니다.", "blue")
+                        break
+                except (IndexError, ValueError): pass
+            last_height = new_height
+        
+        if not self.scraper._is_running: return []
+        self.log_handler("페이지 스크롤 완료.", "black")
+
+        all_items = self.driver.find_elements(By.CSS_SELECTOR, self.step_details['list_item_selector'])
+        filtered_items = []
+        for item in all_items:
+            try:
+                date_element = item.find_element(By.CSS_SELECTOR, self.step_details['list_date_selector'])
+                item_date = datetime.strptime(date_element.text, "%y/%m/%d").date()
+                if (start_date and item_date < start_date) or (end_date and item_date > end_date): continue
+                filtered_items.append({"url": item.get_attribute('href'), "date": item_date})
+            except (ValueError, Exception): continue
+        
+        if not filtered_items:
+            self.log_handler("지정한 기간 내에 수집할 아이템이 없습니다.", "orange")
+            return []
+        self.log_handler(f"총 {len(filtered_items)}개의 필터링된 아이템 URL을 수집했습니다.", "black")
+
+        rules = self.step_details.get('detail_page_rules', {})
+        for i, item_info in enumerate(filtered_items):
+            if not self.scraper._is_running: break
+            url = item_info['url']
+            self.log_handler(f"  - 아이템 {i+1}/{len(filtered_items)} 상세 정보 스크래핑 중...", "black")
+            self.driver.get(url)
+            
+            try:
+                self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, rules['order_number']['selector'])))
+            except TimeoutException:
+                self.log_handler("    - 상세 페이지 로딩 시간 초과. 다음 아이템으로 넘어갑니다.", "orange")
+                continue
+            
+            soup = BeautifulSoup(self.driver.page_source, 'html.parser')
+            item_data = self._parse_item_data(soup, rules)
+            item_data['_date'] = item_info['date']
+            self.collected_data.append(item_data)
+
+        if self.scraper._is_running:
+            self.log_handler("모든 상세 정보 스크래핑 완료.", "green")
+        
+        return self.collected_data

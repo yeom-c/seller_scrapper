@@ -2,15 +2,16 @@ import sys
 import json
 from datetime import datetime
 from PySide6.QtCore import QDate, QThread, Qt
-from PySide6.QtGui import QCursor # QCursor import 추가
+from PySide6.QtGui import QCursor
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QTabWidget,
     QLabel, QPushButton, QTextEdit, QHBoxLayout, QDateEdit
 )
 from scraping_worker import ScraperWorker
+from .tabs.kream_tab import KreamTab
 
 class MainWindow(QMainWindow):
-    """애플리케이션의 메인 윈도우 클래스."""
+    """애플리케이션의 메인 윈도우 (컨테이너 역할)."""
     
     def __init__(self, workflows_by_permission):
         super().__init__()
@@ -26,12 +27,15 @@ class MainWindow(QMainWindow):
         self.tabs = QTabWidget()
         main_layout.addWidget(self.tabs)
         
+        # __init__의 파라미터인 workflows_by_permission을 그대로 사용
         self.authorized_workflows = self._parse_workflows(workflows_by_permission)
         self._create_tabs()
 
         if hasattr(self, '_parsing_errors') and self._parsing_errors:
-            for error_msg in self._parsing_errors:
-                self.update_log(error_msg, "red")
+            first_tab = self.tabs.widget(0)
+            if first_tab and hasattr(first_tab, 'log_edit'):
+                for error_msg in self._parsing_errors:
+                    self.update_log_on_tab(first_tab, error_msg, "red")
 
     def _parse_workflows(self, workflows_by_permission):
         """워크플로우 데이터를 파싱하고, 에러는 별도로 저장합니다."""
@@ -47,99 +51,46 @@ class MainWindow(QMainWindow):
         return parsed_workflows
 
     def _create_tabs(self):
-        """워크플로우 객체를 기반으로 탭을 생성하고 UI를 구성합니다."""
+        """워크플로우 객체를 기반으로 탭 위젯을 생성하고 추가합니다."""
         if not self.authorized_workflows:
-            self.setup_fallback_ui()
-            self.update_log("표시할 수 있는 작업이 없습니다.", "orange")
+            fallback_tab = QWidget()
+            self.tabs.addTab(fallback_tab, "알림")
+            layout = QVBoxLayout(fallback_tab)
+            log_edit = QTextEdit("표시할 수 있는 작업이 없습니다.")
+            log_edit.setReadOnly(True)
+            layout.addWidget(log_edit)
             return
 
         for permission, workflow_data in self.authorized_workflows.items():
             tab_name = workflow_data.get("site_name", permission.upper())
-            tab_widget = QWidget()
-            self.tabs.addTab(tab_widget, tab_name)
             
             if permission == 'kream':
-                self.setup_kream_tab(tab_widget, workflow_data)
+                tab_widget = KreamTab(workflow_data)
+                tab_widget.start_scraping_signal.connect(self.start_scraping)
+                tab_widget.stop_button.clicked.connect(self.stop_scraping)
             else:
+                tab_widget = QWidget()
                 layout = QVBoxLayout(tab_widget)
                 layout.addWidget(QLabel(f"{tab_name} 탭입니다."))
-    
-    def setup_fallback_ui(self):
-        """워크플로우가 하나도 없을 때 표시할 최소한의 UI를 설정합니다."""
-        fallback_tab = QWidget()
-        self.tabs.addTab(fallback_tab, "알림")
-        layout = QVBoxLayout(fallback_tab)
-        self.log_edit = QTextEdit()
-        self.log_edit.setReadOnly(True)
-        layout.addWidget(self.log_edit)
+            
+            self.tabs.addTab(tab_widget, tab_name)
 
-    def setup_kream_tab(self, tab, workflow_data):
-        """KREAM 탭의 UI 레이아웃을 설정하고 버튼에 기능을 연결합니다."""
-        main_layout = QVBoxLayout(tab)
+    def start_scraping(self, workflow_data, date_range):
+        """탭으로부터 신호를 받아 스크레이핑 스레드를 시작합니다."""
+        active_tab = self.tabs.currentWidget()
+        if not (active_tab and hasattr(active_tab, 'start_button')): return
+
+        active_tab.start_button.setEnabled(False)
+        active_tab.stop_button.setEnabled(True)
+        active_tab.log_edit.clear()
+        self.update_log_on_tab(active_tab, "작업을 준비 중입니다...", "black")
         
-        date_layout = QHBoxLayout()
-        self.start_date_edit = QDateEdit(QDate.currentDate().addMonths(-1))
-        self.start_date_edit.setCalendarPopup(True)
-        self.start_date_edit.setDisplayFormat("yyyy-MM-dd")
-        self.end_date_edit = QDateEdit(QDate.currentDate())
-        self.end_date_edit.setCalendarPopup(True)
-        self.end_date_edit.setDisplayFormat("yyyy-MM-dd")
-        date_layout.addWidget(QLabel("시작일:"))
-        date_layout.addWidget(self.start_date_edit)
-        date_layout.addWidget(QLabel("종료일:"))
-        date_layout.addWidget(self.end_date_edit)
-        date_layout.addStretch()
-
-        button_layout = QHBoxLayout()
-        self.start_button = QPushButton("시작 ▶")
-        self.start_button.setFixedHeight(40)
-        self.stop_button = QPushButton("중단 ■")
-        self.stop_button.setFixedHeight(40)
-        self.stop_button.setEnabled(False)
-        
-        self.start_button.setStyleSheet("background-color: #4A90E2; color: white; border-radius: 5px; font-weight: bold;")
-        self.stop_button.setStyleSheet("background-color: #EF5350; color: white; border-radius: 5px; font-weight: bold;")
-        
-        self.start_button.setCursor(QCursor(Qt.PointingHandCursor))
-        self.stop_button.setCursor(QCursor(Qt.PointingHandCursor))
-        
-        button_layout.addWidget(self.start_button)
-        button_layout.addWidget(self.stop_button)
-
-        self.log_edit = QTextEdit()
-        self.log_edit.setReadOnly(True)
-
-        main_layout.addLayout(date_layout)
-        main_layout.addLayout(button_layout)
-        main_layout.addWidget(self.log_edit)
-
-        self.start_button.clicked.connect(lambda: self.start_scraping(workflow_data))
-        self.stop_button.clicked.connect(self.stop_scraping)
-
-    def update_log(self, message, color="black"):
-        """지정된 색상으로 로그 메시지를 추가합니다."""
-        if not hasattr(self, 'log_edit'): return
-        html_message = f'<font color="{color}">{message}</font>'
-        self.log_edit.append(html_message)
-
-    def start_scraping(self, workflow_data):
-        """스크레이핑 작업을 백그라운드 스레드에서 시작합니다."""
-        self.start_button.setEnabled(False)
-        self.stop_button.setEnabled(True)
-        self.log_edit.clear()
-        self.update_log("작업을 준비 중입니다...", "black")
-
-        start_date = self.start_date_edit.date().toPython()
-        end_date = self.end_date_edit.date().toPython()
-        
-        date_range = {'start_date': start_date, 'end_date': end_date}
-
         self.thread = QThread()
         self.worker = ScraperWorker(workflow_data, date_range)
         self.worker.moveToThread(self.thread)
 
-        self.worker.log_message.connect(self.update_log)
-        self.worker.error.connect(lambda msg: self.update_log(msg, "red"))
+        self.worker.log_message.connect(lambda msg, color: self.update_log_on_tab(self.tabs.currentWidget(), msg, color))
+        self.worker.error.connect(lambda msg: self.update_log_on_tab(self.tabs.currentWidget(), msg, "red"))
         self.thread.started.connect(self.worker.run)
         self.worker.finished.connect(self.on_scraping_finished)
         
@@ -147,16 +98,21 @@ class MainWindow(QMainWindow):
 
     def stop_scraping(self):
         """진행 중인 스크레이핑 작업을 중단하도록 요청합니다."""
+        active_tab = self.tabs.currentWidget()
         if self.worker:
-            self.update_log("작업 중단을 요청합니다...", "orange")
+            self.update_log_on_tab(active_tab, "작업 중단을 요청합니다...", "orange")
             self.worker.stop()
-            self.stop_button.setEnabled(False)
+            if hasattr(active_tab, 'stop_button'):
+                active_tab.stop_button.setEnabled(False)
 
     def on_scraping_finished(self):
-        """스크레이핑 작업이 완료되거나 중단되었을 때 UI를 정리합니다."""
-        self.update_log("작업 스레드가 종료되었습니다.", "blue")
-        self.start_button.setEnabled(True)
-        self.stop_button.setEnabled(False)
+        """스크레이핑 작업이 완료/중단되었을 때 UI를 정리합니다."""
+        active_tab = self.tabs.currentWidget()
+        self.update_log_on_tab(active_tab, "작업 스레드가 종료되었습니다.", "blue")
+        
+        if hasattr(active_tab, 'start_button'):
+            active_tab.start_button.setEnabled(True)
+            active_tab.stop_button.setEnabled(False)
         
         if self.thread and self.thread.isRunning():
             self.thread.quit()
@@ -164,3 +120,9 @@ class MainWindow(QMainWindow):
         
         self.thread = None
         self.worker = None
+    
+    def update_log_on_tab(self, tab, message, color="black"):
+        """지정된 탭의 로그 창에 메시지를 업데이트합니다."""
+        if hasattr(tab, 'log_edit'):
+            html_message = f'<font color="{color}">{message}</font>'
+            tab.log_edit.append(html_message)
