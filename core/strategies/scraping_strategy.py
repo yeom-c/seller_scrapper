@@ -4,7 +4,7 @@ from selenium.webdriver.common.by import By
 from typing import List, Dict, Any, Optional
 
 class ScrapingStrategy:
-    """모든 스크레이핑 전략의 기반이 되는 클래스."""
+    """모든 스크랩핑 전략의 기반이 되는 클래스."""
 
     # 상수 정의
     SCROLL_PAUSE_TIME = 2
@@ -46,7 +46,7 @@ class ScrapingStrategy:
                 break
                 
             if start_date and self._check_reached_start_date(start_date):
-                self.log_handler("시작일에 도달하여 스크롤을 중단합니다.", "blue")
+                self.log_handler("시작일에 도달하여 스크롤을 중단합니다.", "black")
                 break
                 
             last_height = new_height

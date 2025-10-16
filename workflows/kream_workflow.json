@@ -13,7 +13,7 @@
       }
     },
     {
-      "step_name": "일반 판매 정산 내역 스크랩핑",
+      "step_name": "일반 판매 정산 내역 수집",
       "action_type": "kream_scrap_1",
       "target_url": "https://kream.co.kr/my/selling?tab=finished&status=payout_completed",
       "output_filename": "크림_일반판매",
@@ -73,7 +73,7 @@
       }
     },
     {
-      "step_name": "보관 판매 정산 내역 스크랩핑",
+      "step_name": "보관 판매 정산 내역 수집",
       "action_type": "kream_scrap_2",
       "target_url": "https://kream.co.kr/my/inventory?tab=finished&status=payout_completed",
       "output_filename": "크림_보관판매",

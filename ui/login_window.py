@@ -8,7 +8,7 @@ class LoginWindow(QWidget):
     def __init__(self):
         """LoginWindow 클래스의 생성자입니다."""
         super().__init__()
-        self.setWindowTitle("로그인")
+        self.setWindowTitle("판매내역 수집기")
         self.resize(300, 150)
         self._center_on_screen()
 
@@ -50,7 +50,7 @@ class LoginWindow(QWidget):
                         }
                     },
                     {
-                        "step_name": "일반 판매 정산 내역 스크랩핑",
+                        "step_name": "일반 판매 정산 내역 수집",
                         "action_type": "kream_scrap_1",
                         "target_url": "https://kream.co.kr/my/selling?tab=finished&status=payout_completed",
                         "output_filename": "크림_일반판매",
@@ -110,7 +110,7 @@ class LoginWindow(QWidget):
                         }
                     },
                     {
-                        "step_name": "보관 판매 정산 내역 스크랩핑",
+                        "step_name": "보관 판매 정산 내역 수집",
                         "action_type": "kream_scrap_2",
                         "target_url": "https://kream.co.kr/my/inventory?tab=finished&status=payout_completed",
                         "output_filename": "크림_보관판매",

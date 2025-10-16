@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 from .scraping_strategy import ScrapingStrategy
 
 class KreamScrap2Strategy(ScrapingStrategy):
-    """'보관 판매 내역' 스크레이핑 전략을 담당하는 클래스."""
+    """'보관 판매 내역' 스크랩핑 전략을 담당하는 클래스."""
 
     STALE_ELEMENT_REFRESH_WAIT_TIME = 2
 
@@ -62,7 +62,7 @@ class KreamScrap2Strategy(ScrapingStrategy):
                 break
 
             self.progress_handler(i + 1, total_items)
-            self.log_handler(f"  - 아이템 {i+1}/{total_items} 상세 정보 스크래핑 중...", "black")
+            self.log_handler(f"  - 아이템 {i+1}/{total_items} 상세 정보 수집 중...", "black")
             
             try:
                 self._scrape_item_detail(item_info, rules)
@@ -131,6 +131,6 @@ class KreamScrap2Strategy(ScrapingStrategy):
     def _log_completion_status(self) -> None:
         """작업 완료 상태를 로깅합니다."""
         if self.scraper._is_running:
-            self.log_handler("모든 상세 정보 스크래핑 완료.", "green")
+            self.log_handler("모든 아이템 상세 정보 수집 완료.", "blue")
         else:
             self.log_handler(f"작업이 중단되었습니다. 총 {len(self.collected_data)}개 데이터가 수집되었습니다.", "orange")

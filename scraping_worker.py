@@ -3,7 +3,7 @@ from core.scraper import WorkflowScraper
 
 class ScraperWorker(QObject):
     """
-    백그라운드 스레드에서 스크레이핑 작업을 실행하는 워커 클래스.
+    백그라운드 스레드에서 스크랩핑 작업을 실행하는 워커 클래스.
     """
     log_message = Signal(str, str)
     finished = Signal()
@@ -18,7 +18,7 @@ class ScraperWorker(QObject):
         self.scraper = None
 
     def run(self):
-        """스크레이핑 작업을 시작합니다."""
+        """스크랩핑 작업을 시작합니다."""
         try:
             self.scraper = WorkflowScraper(
                 log_handler=self.log_message.emit,
@@ -34,6 +34,6 @@ class ScraperWorker(QObject):
             self.finished.emit()
 
     def stop(self):
-        """스크레이퍼에 작업 중단을 요청합니다."""
+        """스크랩퍼에 작업 중단을 요청합니다."""
         if self.scraper:
             self.scraper.stop()

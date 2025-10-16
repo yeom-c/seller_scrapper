@@ -14,7 +14,7 @@ from utils.file_handler import save_to_csv
 
 
 class WorkflowScraper:
-    """워크플로우의 각 단계를 순차적으로 실행하는 범용 스크레이퍼 엔진."""
+    """워크플로우의 각 단계를 순차적으로 실행하는 범용 스크랩퍼 엔진."""
     
     # 상수 정의
     DEFAULT_WAIT_TIMEOUT = 3
@@ -42,11 +42,11 @@ class WorkflowScraper:
         """WebDriver를 초기화합니다."""
         service = ChromeService(ChromeDriverManager().install())
         driver = webdriver.Chrome(service=service)
-        self.log_handler("WebDriver가 시작되었습니다.", "blue")
+        self.log_handler("브라우저가 실행되었습니다.", "blue")
         return driver
 
     def stop(self) -> None:
-        """외부에서 스크레이핑 작업을 중단하도록 요청합니다."""
+        """외부에서 스크랩핑 작업을 중단하도록 요청합니다."""
         if self._is_running:
             self.log_handler("작업 중단 신호를 받았습니다.", "orange")
             self._is_running = False
@@ -64,10 +64,12 @@ class WorkflowScraper:
                 
                 self.current_step_details = step
                 step_name = step.get('step_name', 'Unnamed Step')
-                self.log_handler(f"\n--- Step {i+1}: {step_name} 시작 ---", "black")
+                self.log_handler(f"\n작업 {i+1}: {step_name} 시작", "green")
                 
                 if not self._execute_step(step, step_name):
                     break
+
+                self.log_handler(f"작업 {i+1}: {step_name} 완료", "green")
         finally:
             self.close()
 
@@ -84,18 +86,18 @@ class WorkflowScraper:
                 self._execute_navigate(step)
             elif action_type == 'manual_login':
                 if not self._execute_manual_login(step):
-                    self.log_handler("로그인 실패. 워크플로우를 중단합니다.", "red")
+                    self.log_handler("로그인 실패. 작업을 중단합니다.", "red")
                     return False
             elif action_type in self.strategy_map:
                 self._execute_scraping_strategy(step, step_name, action_type)
             else:
-                self.log_handler(f"경고: 알 수 없는 action_type '{action_type}'입니다.", "orange")
+                self.log_handler(f"'{action_type}' 경고: 알 수 없는 action_type", "orange")
             
             return True
             
         except Exception as e:
             if self._is_running:
-                self.log_handler(f"❌ '{step_name}' 작업 중 오류가 발생했습니다: {e}", "red")
+                self.log_handler(f"'{step_name}' 작업 중 오류: {e}", "red")
             
             # 예외 발생 시에도 수집된 데이터가 있으면 저장 시도
             if self.collected_data:
@@ -114,7 +116,7 @@ class WorkflowScraper:
         try:
             self.collected_data = strategy_instance.execute()
         except Exception as strategy_error:
-            self.log_handler(f"스크래핑 중 오류 발생: {strategy_error}", "red")
+            self.log_handler(f"수집 중 오류 발생: {strategy_error}", "red")
             # 오류가 발생해도 수집된 데이터가 있으면 가져옴
             self.collected_data = strategy_instance.collected_data
         
@@ -187,7 +189,7 @@ class WorkflowScraper:
         selector = condition.get('selector')
         text_to_find = condition.get('text_contains')
         
-        self.log_handler(f"\n브라우저에서 직접 로그인을 진행해주세요. (최대 {timeout}초 대기)", "purple")
+        self.log_handler(f"\n브라우저에서 직접 로그인을 진행해주세요. (최대 {timeout}초 대기)", "orange")
         
         try:
             xpath_selector = self._build_xpath_selector(selector, text_to_find)
@@ -197,19 +199,18 @@ class WorkflowScraper:
             if not self._is_running:
                 return False
                 
-            self.log_handler("🎉 로그인 성공! 다음 단계를 진행합니다.", "green")
             return True
             
         except TimeoutException:
             if not self._is_running:
                 return False
-            self.log_handler(f"⏰ 시간 초과! 로그인된 요소를 찾지 못했습니다.", "orange")
+            self.log_handler(f"시간 초과: 로그인에 실패했습니다.", "orange")
             return False
             
         except Exception as e:
             if not self._is_running:
                 return False
-            self.log_handler(f"로그인 감지 중 오류 발생: {e}", "red")
+            self.log_handler(f"로그인 중 오류 발생: {e}", "red")
             return False
 
     def _build_xpath_selector(self, selector: str, text_to_find: str) -> str:
@@ -237,7 +238,7 @@ class WorkflowScraper:
         if self.driver:
             try:
                 self.driver.quit()
-                self.log_handler("\nWebDriver가 종료되었습니다.", "blue")
+                self.log_handler("\n브라우저가 종료되었습니다.", "blue")
             except Exception:
                 pass
             self.driver = None

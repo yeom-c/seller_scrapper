@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 from .scraping_strategy import ScrapingStrategy
 
 class KreamScrap1Strategy(ScrapingStrategy):
-    """'일반 판매 내역' 스크레이핑 전략을 담당하는 클래스."""
+    """'일반 판매 내역' 스크랩핑 전략을 담당하는 클래스."""
 
     def execute(self) -> List[Dict[str, Any]]:
         """일반 판매 내역을 스크래핑합니다."""
@@ -24,7 +24,7 @@ class KreamScrap1Strategy(ScrapingStrategy):
             self.log_handler("지정한 기간 내에 수집할 아이템이 없습니다.", "orange")
             return []
         
-        self.log_handler(f"총 {len(filtered_items)}개의 필터링된 아이템 URL을 수집했습니다.", "black")
+        self.log_handler(f"총 {len(filtered_items)}개의 필터링된 아이템을 수집했습니다.", "black")
 
         # 3. 상세 정보 수집
         self._collect_detail_data(filtered_items)
@@ -60,7 +60,7 @@ class KreamScrap1Strategy(ScrapingStrategy):
                 break
             
             self.progress_handler(i + 1, total_items)
-            self.log_handler(f"  - 아이템 {i+1}/{total_items} 상세 정보 스크래핑 중...", "black")
+            self.log_handler(f"  - 아이템 {i+1}/{total_items} 상세 정보 수집 중...", "black")
             
             try:
                 self._scrape_item_detail(item_info, rules)
@@ -93,6 +93,6 @@ class KreamScrap1Strategy(ScrapingStrategy):
     def _log_completion_status(self) -> None:
         """작업 완료 상태를 로깅합니다."""
         if self.scraper._is_running:
-            self.log_handler("모든 상세 정보 스크래핑 완료.", "green")
+            self.log_handler("모든 아이템 상세 정보 수집 완료.", "blue")
         else:
             self.log_handler(f"작업이 중단되었습니다. 총 {len(self.collected_data)}개 데이터가 수집되었습니다.", "orange")

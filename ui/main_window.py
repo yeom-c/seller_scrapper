@@ -14,7 +14,7 @@ class MainWindow(QMainWindow):
     
     def __init__(self, workflows_by_permission: Dict[str, str]):
         super().__init__()
-        self.setWindowTitle("판매내역 스크래퍼")
+        self.setWindowTitle("판매내역 수집기")
         self.resize(800, 600)
         self.thread: Optional[QThread] = None
         self.worker: Optional[ScraperWorker] = None
@@ -109,7 +109,7 @@ class MainWindow(QMainWindow):
         open_output_folder(current_tab_name)
 
     def start_scraping(self, workflow_data: Dict, date_range: Dict) -> None:
-        """탭으로부터 신호를 받아 스크레이핑 스레드를 시작합니다."""
+        """탭으로부터 신호를 받아 스크랩핑 스레드를 시작합니다."""
         active_tab = self.tabs.currentWidget()
         if not (active_tab and hasattr(active_tab, 'start_button')):
             return
@@ -123,7 +123,6 @@ class MainWindow(QMainWindow):
         active_tab.stop_button.setEnabled(True)
         active_tab.log_edit.clear()
         active_tab.progress_bar.setValue(0)
-        self.update_log_on_tab(active_tab, "작업을 준비 중입니다...", "black")
 
     def _create_and_start_worker(self, workflow_data: Dict, date_range: Dict, active_tab: QWidget) -> None:
         """워커 스레드를 생성하고 시작합니다."""
@@ -146,7 +145,7 @@ class MainWindow(QMainWindow):
         self.thread.start()
 
     def stop_scraping(self) -> None:
-        """진행 중인 스크레이핑 작업을 중단하도록 요청합니다."""
+        """진행 중인 스크랩핑 작업을 중단하도록 요청합니다."""
         active_tab = self.tabs.currentWidget()
         if self.worker:
             self.update_log_on_tab(active_tab, "작업 중단을 요청합니다...", "orange")
@@ -155,7 +154,7 @@ class MainWindow(QMainWindow):
                 active_tab.stop_button.setEnabled(False)
 
     def on_scraping_finished(self) -> None:
-        """스크레이핑 작업이 완료/중단되었을 때 UI를 정리합니다."""
+        """스크랩핑 작업이 완료/중단되었을 때 UI를 정리합니다."""
         active_tab = self.tabs.currentWidget()
         self.update_log_on_tab(active_tab, "작업 스레드가 종료되었습니다.", "blue")
         
@@ -206,7 +205,7 @@ class MainWindow(QMainWindow):
             reply = QMessageBox.question(
                 self, 
                 '종료 확인', 
-                "스크레이핑 작업이 진행 중입니다.\n정말로 종료하시겠습니까?", 
+                "스크랩핑 작업이 진행 중입니다.\n정말로 종료하시겠습니까?", 
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, 
                 QMessageBox.StandardButton.No
             )

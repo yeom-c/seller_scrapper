@@ -32,9 +32,9 @@ class KreamTab(QWidget):
         date_layout.addStretch()
 
         button_layout = QHBoxLayout()
-        self.start_button = QPushButton("스크레이핑 시작")
+        self.start_button = QPushButton("수집 시작")
         self.start_button.setFixedHeight(40)
-        self.stop_button = QPushButton("스크랩 중단")
+        self.stop_button = QPushButton("수집 중단")
         self.stop_button.setFixedHeight(40)
         self.stop_button.setEnabled(False)
         
