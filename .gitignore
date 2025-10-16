@@ -16,6 +16,10 @@ __pycache__/
 dist/
 build/
 
+# PyInstaller 관련
+*.spec
+!build_config.spec
+
 
 # IDE / 편집기 #
 ################
