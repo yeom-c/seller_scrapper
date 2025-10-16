@@ -1,8 +1,10 @@
 import sys
 import json
-from PySide6.QtCore import QThread
+from PySide6.QtCore import QThread, Qt
+from PySide6.QtGui import QCursor
 from PySide6.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QVBoxLayout, QTabWidget, QLabel, QTextEdit
+    QApplication, QMainWindow, QWidget, QVBoxLayout, QTabWidget,
+    QLabel, QPushButton, QTextEdit, QHBoxLayout, QDateEdit, QMessageBox
 )
 from scraping_worker import ScraperWorker
 from .tabs.kream_tab import KreamTab
@@ -17,6 +19,7 @@ class MainWindow(QMainWindow):
         self.setGeometry(300, 300, 800, 600)
         self.thread = None
         self.worker = None
+        self._is_closing = False
 
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -50,32 +53,35 @@ class MainWindow(QMainWindow):
     def _create_tabs(self):
         """워크플로우 객체를 기반으로 탭 위젯을 생성하고 추가합니다."""
         if not self.authorized_workflows:
-            fallback_tab = QWidget()
-            self.tabs.addTab(fallback_tab, "알림")
-            layout = QVBoxLayout(fallback_tab)
-            log_edit = QTextEdit("표시할 수 있는 작업이 없습니다.")
-            log_edit.setReadOnly(True)
-            layout.addWidget(log_edit)
+            self.setup_fallback_ui()
+            self.update_log_on_tab(self.tabs.widget(0), "표시할 수 있는 작업이 없습니다.", "orange")
             return
 
         for permission, workflow_data in self.authorized_workflows.items():
             tab_name = workflow_data.get("site_name", permission.upper())
             
             if permission == 'kream':
-                # 1. KreamTab 인스턴스를 생성하여 tab_widget에 할당
                 tab_widget = KreamTab(workflow_data)
-                # 2. 생성된 tab_widget의 신호를 메인 윈도우의 메소드에 연결
                 tab_widget.start_scraping_signal.connect(self.start_scraping)
                 tab_widget.stop_button.clicked.connect(self.stop_scraping)
                 tab_widget.folder_button.clicked.connect(self.open_current_tab_folder)
             else:
-                # 다른 권한에 대한 탭 위젯 생성
                 tab_widget = QWidget()
                 layout = QVBoxLayout(tab_widget)
                 layout.addWidget(QLabel(f"{tab_name} 탭입니다."))
             
-            # 3. 완성된 tab_widget을 탭에 추가
             self.tabs.addTab(tab_widget, tab_name)
+
+    def setup_fallback_ui(self):
+        """워크플로우가 하나도 없을 때 표시할 최소한의 UI를 설정합니다."""
+        fallback_tab = QWidget()
+        self.tabs.addTab(fallback_tab, "알림")
+        layout = QVBoxLayout(fallback_tab)
+        log_edit = QTextEdit()
+        log_edit.setReadOnly(True)
+        layout.addWidget(log_edit)
+        # log_edit을 인스턴스 변수로 만들어 update_log_on_tab에서 접근 가능하게 함
+        fallback_tab.log_edit = log_edit
 
     def open_current_tab_folder(self):
         """현재 활성화된 탭에 해당하는 output 하위 폴더를 엽니다."""
@@ -130,6 +136,9 @@ class MainWindow(QMainWindow):
         
         self.thread = None
         self.worker = None
+
+        if self._is_closing:
+            self.close()
     
     def update_log_on_tab(self, tab, message, color="black"):
         """지정된 탭의 로그 창에 메시지를 업데이트합니다."""
@@ -150,3 +159,17 @@ class MainWindow(QMainWindow):
         if hasattr(active_tab, 'progress_bar'):
             active_tab.progress_bar.setValue(0)
             active_tab.progress_bar.setFormat(f"'{step_name}' 진행 중... %p%")
+
+    def closeEvent(self, event):
+        """창이 닫힐 때 호출되는 이벤트 핸들러."""
+        if self.thread and self.thread.isRunning():
+            reply = QMessageBox.question(self, '종료 확인', "스크레이핑 작업이 진행 중입니다.\n정말로 종료하시겠습니까?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No)
+
+            if reply == QMessageBox.StandardButton.Yes:
+                self._is_closing = True
+                self.stop_scraping()
+                event.ignore()
+            else:
+                event.ignore()
+        else:
+            event.accept()

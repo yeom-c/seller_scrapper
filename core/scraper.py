@@ -21,14 +21,14 @@ class WorkflowScraper:
     
     def __init__(self, log_handler, progress_handler, step_start_handler):
         self.log_handler = log_handler
-        self.progress_handler = progress_handler # 진행률 핸들러 추가
+        self.progress_handler = progress_handler
         self.step_start_handler = step_start_handler
         self._is_running = True
         self.collected_data = []
         self.current_step_details = {}
         self.date_range = {}
         self.site_name = "default"
-
+        
         service = ChromeService(ChromeDriverManager().install())
         self.driver = webdriver.Chrome(service=service)
         self.wait = WebDriverWait(self.driver, 3)
@@ -77,9 +77,7 @@ class WorkflowScraper:
                             break
                     elif action_type in self.strategy_map:
                         self._execute_navigate(step)
-
                         self.step_start_handler(step_name)
-                        
                         strategy_class = self.strategy_map[action_type]
                         strategy_instance = strategy_class(self, step, kwargs)
                         self.collected_data = strategy_instance.execute()
