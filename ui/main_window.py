@@ -1,12 +1,12 @@
 import sys
 import json
-from datetime import datetime
 from PySide6.QtCore import QThread
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QTabWidget, QLabel, QTextEdit
 )
 from scraping_worker import ScraperWorker
 from .tabs.kream_tab import KreamTab
+from utils.system_handler import open_output_folder
 
 class MainWindow(QMainWindow):
     """애플리케이션의 메인 윈도우 (컨테이너 역할)."""
@@ -62,15 +62,25 @@ class MainWindow(QMainWindow):
             tab_name = workflow_data.get("site_name", permission.upper())
             
             if permission == 'kream':
+                # 1. KreamTab 인스턴스를 생성하여 tab_widget에 할당
                 tab_widget = KreamTab(workflow_data)
+                # 2. 생성된 tab_widget의 신호를 메인 윈도우의 메소드에 연결
                 tab_widget.start_scraping_signal.connect(self.start_scraping)
                 tab_widget.stop_button.clicked.connect(self.stop_scraping)
+                tab_widget.folder_button.clicked.connect(self.open_current_tab_folder)
             else:
+                # 다른 권한에 대한 탭 위젯 생성
                 tab_widget = QWidget()
                 layout = QVBoxLayout(tab_widget)
                 layout.addWidget(QLabel(f"{tab_name} 탭입니다."))
             
+            # 3. 완성된 tab_widget을 탭에 추가
             self.tabs.addTab(tab_widget, tab_name)
+
+    def open_current_tab_folder(self):
+        """현재 활성화된 탭에 해당하는 output 하위 폴더를 엽니다."""
+        current_tab_name = self.tabs.tabText(self.tabs.currentIndex())
+        open_output_folder(current_tab_name)
 
     def start_scraping(self, workflow_data, date_range):
         """탭으로부터 신호를 받아 스크레이핑 스레드를 시작합니다."""
@@ -86,6 +96,7 @@ class MainWindow(QMainWindow):
         self.thread = QThread()
         self.worker = ScraperWorker(workflow_data, date_range)
         self.worker.moveToThread(self.thread)
+
         self.worker.step_started.connect(self.on_step_started)
         self.worker.progress_updated.connect(self.update_progress)
         self.worker.log_message.connect(lambda msg, color: self.update_log_on_tab(self.tabs.currentWidget(), msg, color))
@@ -125,13 +136,6 @@ class MainWindow(QMainWindow):
         if hasattr(tab, 'log_edit'):
             html_message = f'<font color="{color}">{message}</font>'
             tab.log_edit.append(html_message)
-
-    def on_step_started(self, step_name):
-        """새로운 스크랩 단계가 시작될 때 프로그레스 바를 리셋합니다."""
-        active_tab = self.tabs.currentWidget()
-        if hasattr(active_tab, 'progress_bar'):
-            active_tab.progress_bar.setValue(0)
-            active_tab.progress_bar.setFormat(f"'{step_name}' 진행 중... %p%")
             
     def update_progress(self, current, total):
         """프로그레스 바의 값을 업데이트합니다."""
@@ -139,3 +143,10 @@ class MainWindow(QMainWindow):
         if hasattr(active_tab, 'progress_bar'):
             active_tab.progress_bar.setMaximum(total)
             active_tab.progress_bar.setValue(current)
+
+    def on_step_started(self, step_name):
+        """새로운 스크랩 단계가 시작될 때 프로그레스 바를 리셋합니다."""
+        active_tab = self.tabs.currentWidget()
+        if hasattr(active_tab, 'progress_bar'):
+            active_tab.progress_bar.setValue(0)
+            active_tab.progress_bar.setFormat(f"'{step_name}' 진행 중... %p%")

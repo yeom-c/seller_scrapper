@@ -26,7 +26,7 @@ class ScraperWorker(QObject):
                 progress_handler=self.progress_updated.emit,
                 step_start_handler=self.step_started.emit
             )
-            self.scraper.run_workflow(self.workflow_data['steps'], **self.date_range)
+            self.scraper.run_workflow(self.workflow_data, **self.date_range)
         except Exception as e:
             self.error.emit(f"작업 중 오류 발생: {e}")
         finally:

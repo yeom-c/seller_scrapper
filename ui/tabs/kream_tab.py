@@ -38,14 +38,21 @@ class KreamTab(QWidget):
         self.stop_button.setFixedHeight(40)
         self.stop_button.setEnabled(False)
         
+        self.folder_button = QPushButton("폴더")
+        self.folder_button.setFixedHeight(40)
+        self.folder_button.setFixedWidth(100)
+
         self.start_button.setStyleSheet("background-color: #4A90E2; color: white; border-radius: 5px; font-weight: bold;")
         self.stop_button.setStyleSheet("background-color: #EF5350; color: white; border-radius: 5px; font-weight: bold;")
-        
+        self.folder_button.setStyleSheet("background-color: #757575; color: white; border-radius: 5px; font-weight: bold;")
+
         self.start_button.setCursor(QCursor(Qt.PointingHandCursor))
         self.stop_button.setCursor(QCursor(Qt.PointingHandCursor))
-        
-        button_layout.addWidget(self.start_button)
-        button_layout.addWidget(self.stop_button)
+        self.folder_button.setCursor(QCursor(Qt.PointingHandCursor))
+
+        button_layout.addWidget(self.start_button, 1)
+        button_layout.addWidget(self.stop_button, 1)
+        button_layout.addWidget(self.folder_button)
 
         self.progress_bar = QProgressBar()
         self.progress_bar.setValue(0)

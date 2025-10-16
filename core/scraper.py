@@ -27,7 +27,8 @@ class WorkflowScraper:
         self.collected_data = []
         self.current_step_details = {}
         self.date_range = {}
-        
+        self.site_name = "default"
+
         service = ChromeService(ChromeDriverManager().install())
         self.driver = webdriver.Chrome(service=service)
         self.wait = WebDriverWait(self.driver, 3)
@@ -52,9 +53,11 @@ class WorkflowScraper:
                     pass
                 self.driver = None
 
-    def run_workflow(self, steps, **kwargs):
+    def run_workflow(self, workflow_data, **kwargs):
         """워크플로우의 모든 단계를 순서대로 실행합니다."""
         self.date_range = kwargs
+        self.site_name = workflow_data.get('site_name', 'default')
+        steps = workflow_data.get('steps', [])
         try:
             for i, step in enumerate(steps):
                 if not self._is_running: break
@@ -99,6 +102,7 @@ class WorkflowScraper:
         rules = self.current_step_details.get('detail_page_rules', {})
         start_date = self.date_range.get('start_date')
         end_date = self.date_range.get('end_date')
+        subfolder_name = self.site_name
 
         if base_filename and self.collected_data:
             first_item_date = self.collected_data[0].get('_date')
@@ -112,7 +116,7 @@ class WorkflowScraper:
             
             data_to_save = [{k: v for k, v in item.items() if k != '_date'} for item in self.collected_data]
             
-            save_to_csv(data_to_save, final_filename, column_mappings, self.log_handler)
+            save_to_csv(data_to_save, final_filename, subfolder_name, column_mappings, self.log_handler)
             self.collected_data = []
 
     def _execute_manual_login(self, step_details):
