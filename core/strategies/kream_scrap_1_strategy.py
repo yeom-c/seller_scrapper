@@ -24,7 +24,7 @@ class KreamScrap1Strategy(ScrapingStrategy):
             self.log_handler("지정한 기간 내에 수집할 아이템이 없습니다.", "orange")
             return []
         
-        self.log_handler(f"총 {len(filtered_items)}개의 필터링된 아이템을 수집했습니다.", "black")
+        self.log_handler(f"총 {len(filtered_items)}개의 아이템을 찾았습니다.", "black")
 
         # 3. 상세 정보 수집
         self._collect_detail_data(filtered_items)
@@ -32,50 +32,53 @@ class KreamScrap1Strategy(ScrapingStrategy):
         return self.collected_data
 
     def _filter_items_by_date(self, start_date, end_date) -> List[Dict[str, Any]]:
-        """날짜 범위에 맞는 아이템만 필터링합니다."""
+        """날짜 범위에 맞는 아이템만 필터링합니다.
+        
+        Raises:
+            Exception: 요소 검색 또는 날짜 파싱 중 오류
+        """
         all_items = self.driver.find_elements(By.CSS_SELECTOR, self.step_details['list_item_selector'])
         filtered_items = []
         
         for item in all_items:
-            try:
-                date_element = item.find_element(By.CSS_SELECTOR, self.step_details['list_date_selector'])
-                item_date = self._parse_date_from_text(date_element.text)
-                
-                if item_date and self._is_date_in_range(item_date, start_date, end_date):
-                    filtered_items.append({"url": item.get_attribute('href'), "date": item_date})
-            except Exception:
-                continue
+            date_element = item.find_element(By.CSS_SELECTOR, self.step_details['list_date_selector'])
+            item_date = self._parse_date_from_text(date_element.text)
+            
+            if item_date and self._is_date_in_range(item_date, start_date, end_date):
+                filtered_items.append({"url": item.get_attribute('href'), "date": item_date})
         
         return filtered_items
 
     def _collect_detail_data(self, filtered_items: List[Dict[str, Any]]) -> None:
-        """각 아이템의 상세 정보를 수집합니다."""
+        """각 아이템의 상세 정보를 수집합니다.
+        
+        Raises:
+            TimeoutException: 페이지 로딩 시간 초과
+            WebDriverException: WebDriver 실행 중 오류
+            Exception: 기타 예외
+        """
         total_items = len(filtered_items)
         self.progress_handler(0, total_items)
         rules = self.step_details.get('detail_page_rules', {})
 
         for i, item_info in enumerate(filtered_items):
             if not self.scraper._is_running:
-                self.log_handler(f"작업 중단 요청됨. 현재까지 {len(self.collected_data)}개 데이터 수집 완료.", "orange")
                 break
             
             self.progress_handler(i + 1, total_items)
             self.log_handler(f"  - 아이템 {i+1}/{total_items} 상세 정보 수집 중...", "black")
             
-            try:
-                self._scrape_item_detail(item_info, rules)
-            except TimeoutException:
-                self.log_handler("    - 상세 페이지 로딩 시간 초과. 다음 아이템으로 넘어갑니다.", "orange")
-            except WebDriverException as e:
-                if not self.scraper._is_running:
-                    self.log_handler(f"작업 중단됨. 현재까지 {len(self.collected_data)}개 데이터 수집 완료.", "orange")
-                    break
-                self.log_handler(f"    - 오류 발생: {e}. 다음 아이템으로 넘어갑니다.", "orange")
+            self._scrape_item_detail(item_info, rules)
 
         self._log_completion_status()
 
     def _scrape_item_detail(self, item_info: Dict[str, Any], rules: Dict[str, Any]) -> None:
-        """개별 아이템의 상세 정보를 스크래핑합니다."""
+        """개별 아이템의 상세 정보를 스크래핑합니다.
+        
+        Raises:
+            TimeoutException: 페이지 로딩 대기 시간 초과
+            Exception: 요소 검색 또는 데이터 파싱 중 오류
+        """
         url = item_info['url']
         self.driver.get(url)
         

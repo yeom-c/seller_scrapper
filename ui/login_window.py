@@ -39,7 +39,7 @@ class LoginWindow(QWidget):
                 "site_name": "KREAM",
                 "steps": [
                     {
-                        "step_name": "KREAM 로그인",
+                        "step_name": "사용자 로그인",
                         "action_type": "manual_login",
                         "target_url": "https://kream.co.kr/login",
                         "success_condition": {

@@ -48,7 +48,6 @@ class WorkflowScraper:
     def stop(self) -> None:
         """외부에서 스크랩핑 작업을 중단하도록 요청합니다."""
         if self._is_running:
-            self.log_handler("작업 중단 신호를 받았습니다.", "orange")
             self._is_running = False
 
     def run_workflow(self, workflow_data: Dict[str, Any], **kwargs) -> None:
@@ -60,6 +59,7 @@ class WorkflowScraper:
         try:
             for i, step in enumerate(steps):
                 if not self._is_running:
+                    self.log_handler("작업이 중단되었습니다.", "orange")
                     break
                 
                 self.current_step_details = step
@@ -67,10 +67,26 @@ class WorkflowScraper:
                 self.log_handler(f"\n작업 {i+1}: {step_name} 시작", "green")
                 
                 if not self._execute_step(step, step_name):
+                    self.log_handler("작업이 중단되었습니다.", "orange")
                     break
-
+                    
                 self.log_handler(f"작업 {i+1}: {step_name} 완료", "green")
+                    
+        except ValueError as ve:
+            # 설정 오류 (필수 정보 누락, 잘못된 action_type 등)
+            self.log_handler(f"오류: 설정 - {ve}", "red")
+            
+        except TimeoutException as te:
+            # 타임아웃 (로그인 대기 시간 초과 등)
+            self.log_handler(f"오류: 시간 초과 - {te}", "red")
+            
+        except Exception as e:
+            # 기타 모든 예외
+            self.log_handler(f"오류: {type(e).__name__} - {e}", "red")
+            
         finally:
+            # 예외 발생 시 수집된 데이터 저장
+            self._safe_save_collected_data()
             self.close()
 
     def _execute_step(self, step: Dict[str, Any], step_name: str) -> bool:
@@ -78,35 +94,31 @@ class WorkflowScraper:
         
         Returns:
             계속 진행 가능 여부 (False면 워크플로우 중단)
+            
+        Raises:
+            ValueError: 설정 오류
+            TimeoutException: 시간 초과
+            Exception: 기타 실행 오류
         """
-        try:
-            action_type = step.get('action_type')
-            
-            if action_type == 'navigate':
-                self._execute_navigate(step)
-            elif action_type == 'manual_login':
-                if not self._execute_manual_login(step):
-                    self.log_handler("로그인 실패. 작업을 중단합니다.", "red")
-                    return False
-            elif action_type in self.strategy_map:
-                self._execute_scraping_strategy(step, step_name, action_type)
-            else:
-                self.log_handler(f"'{action_type}' 경고: 알 수 없는 action_type", "orange")
-            
-            return True
-            
-        except Exception as e:
-            if self._is_running:
-                self.log_handler(f"'{step_name}' 작업 중 오류: {e}", "red")
-            
-            # 예외 발생 시에도 수집된 데이터가 있으면 저장 시도
-            if self.collected_data:
-                self._safe_save_data()
-            
-            return True  # 다음 스텝 계속 진행
+        action_type = step.get('action_type')
+        
+        if action_type == 'navigate':
+            self._execute_navigate(step)
+        elif action_type == 'manual_login':
+            return self._execute_manual_login(step)
+        elif action_type in self.strategy_map:
+            self._execute_scraping_strategy(step, step_name, action_type)
+        else:
+            raise ValueError(f"알 수 없는 action_type: '{action_type}'")
+        
+        return True
 
     def _execute_scraping_strategy(self, step: Dict[str, Any], step_name: str, action_type: str) -> None:
-        """스크래핑 전략을 실행합니다."""
+        """스크래핑 전략을 실행합니다.
+        
+        Raises:
+            Exception: 스크래핑 중 발생한 모든 예외를 상위로 전파
+        """
         self._execute_navigate(step)
         self.step_start_handler(step_name)
         
@@ -115,19 +127,20 @@ class WorkflowScraper:
         
         try:
             self.collected_data = strategy_instance.execute()
-        except Exception as strategy_error:
-            self.log_handler(f"수집 중 오류 발생: {strategy_error}", "red")
+        except Exception:
             # 오류가 발생해도 수집된 데이터가 있으면 가져옴
             self.collected_data = strategy_instance.collected_data
+            raise  # 예외를 상위로 전파
         
         # 데이터 저장
         if self.collected_data:
             self.save_collected_data()
-        else:
-            self.log_handler("수집된 데이터가 없습니다.", "orange")
 
-    def _safe_save_data(self) -> None:
-        """안전하게 데이터를 저장합니다 (예외 처리 포함)."""
+    def _safe_save_collected_data(self) -> None:
+        """수집된 데이터가 있으면 안전하게 저장합니다."""
+        if not self.collected_data:
+            return
+            
         try:
             self.save_collected_data()
         except Exception as save_error:
@@ -172,7 +185,15 @@ class WorkflowScraper:
         return f"{base_filename}_{start_str}_{end_str}.csv"
 
     def _execute_manual_login(self, step_details: Dict[str, Any]) -> bool:
-        """사용자가 직접 로그인할 때까지 대기하고, 성공 여부를 감지합니다."""
+        """사용자가 직접 로그인할 때까지 대기하고, 성공 여부를 감지합니다.
+        
+        Returns:
+            로그인 성공 여부
+            
+        Raises:
+            ValueError: 필수 정보가 부족한 경우
+            TimeoutException: 로그인 시간 초과
+        """
         if not self._is_running:
             return False
         
@@ -180,8 +201,7 @@ class WorkflowScraper:
         condition = step_details.get('success_condition', {})
         
         if not all([target_url, condition]):
-            self.log_handler("에러: manual_login에 필요한 정보가 부족합니다.", "red")
-            return False
+            raise ValueError("manual_login에 필요한 정보(target_url, success_condition)가 부족합니다")
         
         self.driver.get(target_url)
         
@@ -191,27 +211,15 @@ class WorkflowScraper:
         
         self.log_handler(f"\n브라우저에서 직접 로그인을 진행해주세요. (최대 {timeout}초 대기)", "orange")
         
-        try:
-            xpath_selector = self._build_xpath_selector(selector, text_to_find)
-            wait = WebDriverWait(self.driver, timeout)
-            wait.until(EC.visibility_of_element_located((By.XPATH, xpath_selector)))
+        xpath_selector = self._build_xpath_selector(selector, text_to_find)
+        wait = WebDriverWait(self.driver, timeout)
+        wait.until(EC.visibility_of_element_located((By.XPATH, xpath_selector)))
 
-            if not self._is_running:
-                return False
-                
-            return True
-            
-        except TimeoutException:
-            if not self._is_running:
-                return False
-            self.log_handler(f"시간 초과: 로그인에 실패했습니다.", "orange")
+        if not self._is_running:
             return False
             
-        except Exception as e:
-            if not self._is_running:
-                return False
-            self.log_handler(f"로그인 중 오류 발생: {e}", "red")
-            return False
+        self.log_handler("로그인 성공.", "black")
+        return True
 
     def _build_xpath_selector(self, selector: str, text_to_find: str) -> str:
         """CSS 셀렉터를 XPath로 변환합니다."""
@@ -219,14 +227,17 @@ class WorkflowScraper:
         return f"//{tag}[contains(@class, '{class_name}') and contains(text(), '{text_to_find}')]"
 
     def _execute_navigate(self, step_details: Dict[str, Any]) -> None:
-        """단순 페이지 이동을 처리합니다."""
+        """단순 페이지 이동을 처리합니다.
+        
+        Raises:
+            ValueError: target_url이 지정되지 않은 경우
+        """
         if not self._is_running:
             return
         
         target_url = step_details.get('target_url')
         if not target_url:
-            self.log_handler("에러: target_url이 지정되지 않았습니다.", "red")
-            return
+            raise ValueError("target_url이 지정되지 않았습니다")
             
         self.log_handler(f"페이지로 이동 중: {target_url}", "black")
         self.driver.get(target_url)

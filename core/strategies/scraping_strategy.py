@@ -58,21 +58,23 @@ class ScrapingStrategy:
         return True
 
     def _check_reached_start_date(self, start_date: date) -> bool:
-        """마지막 아이템의 날짜가 시작일보다 이전인지 확인합니다."""
-        try:
-            date_selector = self.step_details['list_date_selector']
-            last_item_date_str = self.driver.find_elements(By.CSS_SELECTOR, date_selector)[-1].text
-            last_item_date = datetime.strptime(last_item_date_str, self.DATE_FORMAT).date()
-            return last_item_date < start_date
-        except (IndexError, ValueError):
-            return False
+        """마지막 아이템의 날짜가 시작일보다 이전인지 확인합니다.
+        
+        Raises:
+            Exception: 요소 검색 또는 날짜 파싱 중 오류
+        """
+        date_selector = self.step_details['list_date_selector']
+        last_item_date_str = self.driver.find_elements(By.CSS_SELECTOR, date_selector)[-1].text
+        last_item_date = datetime.strptime(last_item_date_str, self.DATE_FORMAT).date()
+        return last_item_date < start_date
 
-    def _parse_date_from_text(self, date_text: str) -> Optional[date]:
-        """텍스트에서 날짜를 파싱합니다."""
-        try:
-            return datetime.strptime(date_text, self.DATE_FORMAT).date()
-        except ValueError:
-            return None
+    def _parse_date_from_text(self, date_text: str) -> date:
+        """텍스트에서 날짜를 파싱합니다.
+        
+        Raises:
+            ValueError: 날짜 형식이 올바르지 않은 경우
+        """
+        return datetime.strptime(date_text, self.DATE_FORMAT).date()
 
     def _is_date_in_range(self, item_date: date, start_date: Optional[date], end_date: Optional[date]) -> bool:
         """날짜가 지정된 범위 내에 있는지 확인합니다."""
