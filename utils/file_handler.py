@@ -12,8 +12,14 @@ def save_to_csv(data, filename, subfolder_name, column_mappings=None, log_handle
     output_dir = os.path.join(BASE_DIR, 'output', subfolder_name)
     os.makedirs(output_dir, exist_ok=True)
     file_path = os.path.join(output_dir, filename)
-    df = pd.DataFrame(data)
+    
     if column_mappings:
-        df.rename(columns=column_mappings, inplace=True)
+        # column_mappings의 키 순서대로 DataFrame 생성하여 순서 보장
+        ordered_keys = list(column_mappings.keys())
+        df = pd.DataFrame(data, columns=ordered_keys)
+        df.columns = [column_mappings[key] for key in ordered_keys]
+    else:
+        df = pd.DataFrame(data)
+    
     df.to_csv(file_path, index=False, encoding='utf-8-sig')
     log_handler(f"'{file_path}' 파일 저장이 완료되었습니다.", "blue")

@@ -1,4 +1,5 @@
 import json
+from collections import OrderedDict
 from typing import Dict, Optional
 from PySide6.QtCore import QThread
 from PySide6.QtWidgets import (
@@ -50,7 +51,8 @@ class MainWindow(QMainWindow):
         
         for permission, workflow_json_string in workflows_by_permission.items():
             try:
-                workflow_data = json.loads(workflow_json_string)
+                # JSON 파싱 시 순서 보장을 위해 object_pairs_hook 사용
+                workflow_data = json.loads(workflow_json_string, object_pairs_hook=OrderedDict)
                 parsed_workflows[permission] = workflow_data
             except json.JSONDecodeError:
                 error_msg = f"'{permission}' 권한의 워크플로우 JSON 형식이 잘못되었습니다."
