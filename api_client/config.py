@@ -1,5 +1,3 @@
-"""API 설정 관리."""
-
 import os
 from typing import Optional
 
@@ -10,7 +8,7 @@ class APIConfig:
     # 기본 설정값
     DEFAULT_BASE_URL = "http://localhost:8000/api"
     DEFAULT_TIMEOUT = 10
-    DEFAULT_MAX_RETRIES = 3
+    DEFAULT_MAX_RETRIES = 2
     DEFAULT_RETRY_MAX_DELAY = 3  # 재시도 최대 대기 시간 (초)
     
     def __init__(self):

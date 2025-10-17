@@ -1,8 +1,7 @@
-"""인증 관련 API."""
-
 from typing import Dict, Any, Optional
 from .client import APIClient
 from .config import config
+from .token_manager import token_manager
 
 
 class AuthAPI:
@@ -65,30 +64,35 @@ class AuthAPI:
         
         response = self.client.post('/auth/login', data=data)
         
-        # 토큰 저장
-        if 'access_token' in response:
-            config.access_token = response['access_token']
-        if 'refresh_token' in response:
-            config.refresh_token = response['refresh_token']
+        # 토큰 저장 (config와 token_manager 모두 업데이트)
+        if 'access_token' in response and 'refresh_token' in response:
+            access_token = response['access_token']
+            refresh_token = response['refresh_token']
+            
+            # config에 저장 (기존 방식 유지)
+            config.access_token = access_token
+            config.refresh_token = refresh_token
+            
+            # token_manager에 저장하여 권한 정보 파싱
+            token_manager.set_tokens(access_token, refresh_token)
         
         return response
     
     def logout(self) -> Dict[str, Any]:
         """
-        로그아웃을 수행합니다.
+        로그아웃을 수행합니다. API 호출 없이 로컬 토큰만 정리합니다.
         
         Returns:
-            로그아웃 응답 데이터
-            
-        Raises:
-            APIException: API 에러 발생
+            로그아웃 성공 메시지
         """
-        try:
-            response = self.client.post('/auth/logout')
-            return response
-        finally:
-            # 항상 로컬 토큰 제거
-            config.clear_tokens()
+        # 로컬 토큰 제거
+        config.clear_tokens()
+        token_manager.clear()
+        
+        return {
+            'success': True,
+            'message': '로그아웃되었습니다.'
+        }
     
     def refresh_token(self) -> Dict[str, Any]:
         """
@@ -111,11 +115,17 @@ class AuthAPI:
         
         response = self.client.post('/auth/refresh', data=data)
         
-        # 새 토큰 저장
-        if 'access_token' in response:
-            config.access_token = response['access_token']
-        if 'refresh_token' in response:
-            config.refresh_token = response['refresh_token']
+        # 새 토큰 저장 (config와 token_manager 모두 업데이트)
+        if 'access_token' in response and 'refresh_token' in response:
+            access_token = response['access_token']
+            refresh_token = response['refresh_token']
+            
+            # config에 저장
+            config.access_token = access_token
+            config.refresh_token = refresh_token
+            
+            # token_manager에 저장하여 권한 정보 파싱
+            token_manager.set_tokens(access_token, refresh_token)
         
         return response
     

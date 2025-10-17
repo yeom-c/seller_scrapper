@@ -1,6 +1,3 @@
-"""API 예외 클래스들."""
-
-
 class APIException(Exception):
     """API 관련 기본 예외 클래스."""
     

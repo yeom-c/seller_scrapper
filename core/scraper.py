@@ -78,7 +78,7 @@ class WorkflowScraper:
             
         except TimeoutException as te:
             # 타임아웃 (로그인 대기 시간 초과 등)
-            self.log_handler(f"오류: 시간 초과 - {te}", "red")
+            self.log_handler("오류: 시간 초과", "red")
             
         except Exception as e:
             # 기타 모든 예외

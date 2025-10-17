@@ -15,10 +15,18 @@ class MainApplication:
         self.login_window.login_successful.connect(self.show_main_window)
         self.login_window.show()
 
-    def show_main_window(self, workflows_by_permission):
+    def show_main_window(self):
         """로그인 성공 후 메인 윈도우를 생성하고 표시합니다."""
-        self.main_window = MainWindow(workflows_by_permission)
+        self.main_window = MainWindow()
+        # 로그아웃 시그널 연결
+        self.main_window.logout_requested.connect(self.show_login_window)
         self.main_window.show()
+    
+    def show_login_window(self):
+        """로그아웃 후 로그인 창을 다시 표시합니다."""
+        self.login_window = LoginWindow()
+        self.login_window.login_successful.connect(self.show_main_window)
+        self.login_window.show()
 
     def run(self):
         """애플리케이션의 이벤트 루프를 시작합니다."""

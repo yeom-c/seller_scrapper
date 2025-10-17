@@ -1,5 +1,3 @@
-"""HTTP 클라이언트 기본 구현."""
-
 import json
 import time
 from typing import Any, Dict, Optional, Union

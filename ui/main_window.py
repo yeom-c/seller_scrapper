@@ -1,7 +1,7 @@
 import json
 from collections import OrderedDict
 from typing import Dict, Optional
-from PySide6.QtCore import QThread, Qt
+from PySide6.QtCore import QThread, Qt, QTimer, Signal
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QTabWidget,
     QLabel, QTextEdit, QMessageBox, QApplication
@@ -9,24 +9,35 @@ from PySide6.QtWidgets import (
 from scraping_worker import ScraperWorker
 from .tabs.kream_tab import KreamTab
 from utils.system_handler import open_output_folder
+from api_client import AuthAPI, WorkflowAPI, token_manager
 
 class MainWindow(QMainWindow):
     """애플리케이션의 메인 윈도우 (컨테이너 역할)."""
     
-    def __init__(self, workflows_by_permission: Dict[str, str]):
+    # 로그아웃 시그널 (MainApplication으로 알림)
+    logout_requested = Signal()
+    
+    def __init__(self):
         super().__init__()
         self.setWindowTitle("판매내역 수집기")
         self.resize(800, 600)
         self.thread: Optional[QThread] = None
         self.worker: Optional[ScraperWorker] = None
         self._is_closing = False
+        
+        # API 클라이언트 초기화
+        self.auth_api = AuthAPI()
+        self.workflow_api = WorkflowAPI()
 
         self._setup_ui()
-        self.authorized_workflows = self._parse_workflows(workflows_by_permission)
-        self._create_tabs()
-        self._show_parsing_errors()
         self._center_on_screen()
-
+        
+        # 토큰 갱신 타이머 시작 (30초마다 체크)
+        self._start_token_refresh_timer()
+        
+        # 워크플로우 로드를 지연 실행 (창이 표시된 후)
+        QTimer.singleShot(100, self._refresh_workflows)
+    
     def _center_on_screen(self) -> None:
         """창을 화면 중앙에 배치합니다."""
         screen = QApplication.primaryScreen().geometry()
@@ -109,6 +120,36 @@ class MainWindow(QMainWindow):
         layout.addWidget(log_edit)
         fallback_tab.log_edit = log_edit
 
+    def _show_no_workflow_message(self) -> None:
+        """워크플로우가 없을 때 중앙에 안내 메시지를 표시합니다."""
+        # 모든 탭 제거
+        while self.tabs.count() > 0:
+            self.tabs.removeTab(0)
+        
+        # 안내 메시지 탭 생성
+        message_tab = QWidget()
+        self.tabs.addTab(message_tab, "안내")
+        
+        layout = QVBoxLayout(message_tab)
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        # 메시지 라벨
+        message_label = QLabel(
+            "사용 가능한 워크플로우가 없습니다.\n\n"
+            "관리자에게 문의바랍니다."
+        )
+        message_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        message_label.setStyleSheet("""
+            QLabel {
+                font-size: 18px;
+                color: #666;
+                padding: 40px;
+                line-height: 1.6;
+            }
+        """)
+        
+        layout.addWidget(message_label)
+
     def open_current_tab_folder(self) -> None:
         """현재 활성화된 탭에 해당하는 output 하위 폴더를 엽니다."""
         current_tab_name = self.tabs.tabText(self.tabs.currentIndex())
@@ -172,6 +213,16 @@ class MainWindow(QMainWindow):
 
         if self._is_closing:
             self.close()
+            return
+        
+        # 작업 완료 후 토큰이 만료되었는지 확인
+        if token_manager.is_token_expired():
+            QMessageBox.critical(
+                self,
+                "인증 오류",
+                "인증 오류(3).\n다시 로그인해주세요."
+            )
+            self._logout()
 
     def _cleanup_thread(self) -> None:
         """스레드 정리"""
@@ -205,8 +256,115 @@ class MainWindow(QMainWindow):
             active_tab.progress_bar.setValue(0)
             active_tab.progress_bar.setFormat(f"'{step_name}' 진행 중... %p%")
 
+    def _start_token_refresh_timer(self) -> None:
+        """토큰 갱신 타이머를 시작합니다. 30초마다 토큰 상태를 확인합니다."""
+        self.token_refresh_timer = QTimer(self)
+        self.token_refresh_timer.timeout.connect(self._check_and_refresh_token)
+        self.token_refresh_timer.start(30000)  # 30초마다 체크
+
+    def _check_and_refresh_token(self) -> None:
+        """토큰 갱신이 필요한지 확인하고, 필요하면 갱신합니다."""
+        try:
+            # 토큰이 60초 이내에 만료되거나 권한이 만료되었는지 확인
+            if token_manager.needs_refresh(buffer_seconds=60):
+                # 작업 진행 중인지 확인
+                is_scraping = self.thread is not None and self.thread.isRunning()
+                
+                # 토큰 갱신 시도
+                result = self.auth_api.refresh_token()
+                
+                if result.get("success"):
+                    # 워크플로우 갱신
+                    self._refresh_workflows()
+                else:
+                    # 갱신 실패 처리
+                    if is_scraping:
+                        # 수집 작업 중이면 로그에만 경고 표시 (로그아웃하지 않음)
+                        active_tab = self.tabs.currentWidget()
+                        self.update_log_on_tab(
+                            active_tab,
+                            "인증 오류(1). 작업 완료 후 다시 로그인해주세요.",
+                            "orange"
+                        )
+                    else:
+                        # 작업 중이 아니면 로그아웃 처리
+                        QMessageBox.critical(
+                            self, 
+                            "인증 오류", 
+                            "인증 오류(1).\n다시 로그인해주세요."
+                        )
+                        self._logout()
+                    
+        except Exception as e:
+            # 예외 발생 시 처리
+            is_scraping = self.thread is not None and self.thread.isRunning()
+            
+            if is_scraping:
+                # 수집 작업 중이면 로그에만 경고 표시
+                active_tab = self.tabs.currentWidget()
+                self.update_log_on_tab(
+                    active_tab,
+                    "인증 오류(2). 작업 완료 후 다시 로그인해주세요.",
+                    "orange"
+                )
+            else:
+                # 작업 중이 아니면 로그아웃 처리
+                QMessageBox.critical(
+                    self, 
+                    "인증 오류", 
+                    "인증 오류(2).\n다시 로그인해주세요."
+                )
+                self._logout()
+
+    def _refresh_workflows(self) -> None:
+        """워크플로우를 서버에서 다시 가져와 탭을 업데이트합니다."""
+        try:
+            # 워크플로우 가져오기
+            workflows = self.workflow_api.get_workflows()
+            
+            if not workflows:
+                # 워크플로우가 없는 경우 중앙 안내 화면 표시
+                self._show_no_workflow_message()
+                return
+            
+            # 기존 탭 모두 제거
+            while self.tabs.count() > 0:
+                self.tabs.removeTab(0)
+            
+            # 워크플로우 파싱 및 탭 재생성
+            self.authorized_workflows = self._parse_workflows(workflows)
+            self._create_tabs()
+            self._show_parsing_errors()
+            
+        except Exception as e:
+            QMessageBox.critical(
+                self, 
+                "워크플로우 오류", 
+                "워크플로우 로드 중 오류가 발생했습니다.\n다시 로그인해주세요."
+            )
+            self._logout()
+
+    def _logout(self) -> None:
+        """로그아웃 처리: 타이머 중지, 토큰 정리 후 로그아웃 시그널 발생."""
+        # 토큰 갱신 타이머 중지
+        if hasattr(self, 'token_refresh_timer') and self.token_refresh_timer.isActive():
+            self.token_refresh_timer.stop()
+        
+        # 토큰 정리
+        self.auth_api.logout()
+        
+        # 로그아웃 시그널 발생 (MainApplication이 처리)
+        self.logout_requested.emit()
+        
+        # 창 닫기
+        self.close()
+
     def closeEvent(self, event) -> None:
         """창이 닫힐 때 호출되는 이벤트 핸들러."""
+        # 토큰 갱신 타이머 중지
+        if hasattr(self, 'token_refresh_timer') and self.token_refresh_timer.isActive():
+            self.token_refresh_timer.stop()
+        
         if self.thread and self.thread.isRunning():
             reply = QMessageBox.question(
                 self, 

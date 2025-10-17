@@ -3,13 +3,16 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
     QLineEdit, QPushButton, QMessageBox, QApplication, QStackedWidget
 )
-from api_client import AuthAPI, APIException, AuthenticationError, ValidationError, NetworkError
+from api_client import (
+    AuthAPI, APIException, AuthenticationError, 
+    ValidationError, NetworkError
+)
 
 
 class LoginWindow(QWidget):
     """로그인 화면."""
     
-    login_successful = Signal(dict)
+    login_successful = Signal()
 
     def __init__(self):
         super().__init__()
@@ -391,14 +394,14 @@ class LoginWindow(QWidget):
             QMessageBox.critical(
                 self,
                 "네트워크 오류",
-                f"서버에 연결할 수 없습니다.\n{e.message}\n\n나중에 다시 시도해주세요."
+                "서버에 연결할 수 없습니다.\n나중에 다시 시도해주세요."
             )
             
         except APIException as e:
             QMessageBox.critical(
                 self,
                 "회원가입 실패",
-                f"회원가입 중 오류가 발생했습니다.\n{e.message}"
+                "회원가입 중 오류가 발생했습니다."
             )
             
         finally:
@@ -427,22 +430,18 @@ class LoginWindow(QWidget):
     def _do_login(self, email: str, password: str):
         """실제 로그인 API 호출."""
         try:
-            # API 호출하여 로그인
+            # 로그인 API 호출하여 JWT 토큰 받기
             response = self.auth_api.login(email=email, password=password)
             
-            # 서버로부터 워크플로우 권한 정보를 받아옴
-            # TODO: 실제 서버 응답 구조에 맞게 수정 필요
-            workflows_by_permission = response.get('workflows', self._get_default_workflows())
-            
-            # 로그인 성공 시그널 발생
-            self.login_successful.emit(workflows_by_permission)
+            # 로그인 성공 시그널 발생 (워크플로우는 MainWindow에서 로드)
+            self.login_successful.emit()
             self.close()
             
         except AuthenticationError as e:
             QMessageBox.warning(
                 self,
                 "로그인 실패",
-                f"이메일 또는 비밀번호가 올바르지 않습니다.\n{e.message}"
+                "이메일 또는 비밀번호가 올바르지 않습니다."
             )
             self.password_input.clear()
             self.password_input.setFocus()
@@ -451,177 +450,17 @@ class LoginWindow(QWidget):
             QMessageBox.critical(
                 self,
                 "네트워크 오류",
-                f"서버에 연결할 수 없습니다.\n{e.message}\n\n나중에 다시 시도해주세요."
+                "서버에 연결할 수 없습니다.\n나중에 다시 시도해주세요."
             )
             
         except APIException as e:
             QMessageBox.critical(
                 self,
                 "로그인 오류",
-                f"로그인 중 오류가 발생했습니다.\n{e.message}"
+                "로그인 중 오류가 발생했습니다."
             )
             
         finally:
             # 버튼 활성화
             self.login_button.setEnabled(True)
             self.login_button.setText("로그인")
-    
-    def _get_default_workflows(self):
-        """기본 워크플로우를 반환합니다 (서버 응답이 없을 경우 사용)."""
-        workflows_by_permission = {
-            "kream": """
-            {
-                "site_name": "KREAM",
-                "steps": [
-                    {
-                        "step_name": "사용자 로그인",
-                        "action_type": "manual_login",
-                        "target_url": "https://kream.co.kr/login",
-                        "success_condition": {
-                            "type": "element_visible",
-                            "selector": "a.top_link",
-                            "text_contains": "로그아웃",
-                            "timeout": 120
-                        }
-                    },
-                    {
-                        "step_name": "일반 판매 정산 내역 수집",
-                        "action_type": "kream_scrap_1",
-                        "target_url": "https://kream.co.kr/my/selling?tab=finished&status=payout_completed",
-                        "output_filename": "크림_일반판매",
-                        "list_item_selector": "a.product_list_info_action",
-                        "list_date_selector": ".caption_item p",
-                        "detail_page_rules": {
-                            "order_number": {
-                                "column_name": "주문번호",
-                                "selector": ".text-header-checkout p",
-                                "type": "text"
-                            },
-                            "product_name_eng": {
-                                "column_name": "상품명(영문)",
-                                "selector": "p.product_title",
-                                "type": "text"
-                            },
-                            "product_name_kor": {
-                                "column_name": "상품명(한글)",
-                                "selector": "p.product_subtitle",
-                                "type": "text"
-                            },
-                            "product_model": {
-                                "column_name": "상품 모델",
-                                "selector": "p.product_description",
-                                "type": "text"
-                            },
-                            "size": {
-                                "column_name": "사이즈",
-                                "selector": "span.product_option--name",
-                                "type": "text"
-                            },
-                            "transaction_date": {
-                                "column_name": "거래 일시",
-                                "label": "거래 일시",
-                                "type": "find_by_label"
-                            },
-                            "payout_date": {
-                                "column_name": "정산일",
-                                "label": "정산일",
-                                "type": "find_by_label"
-                            },
-                            "instant_sell_price": {
-                                "column_name": "즉시 판매가",
-                                "label": "즉시 판매가",
-                                "type": "find_by_label"
-                            },
-                            "commission_fee": {
-                                "column_name": "수수료",
-                                "label": "수수료",
-                                "type": "find_by_label"
-                            },
-                            "payout_amount": {
-                                "column_name": "정산금액",
-                                "label": "정산금액",
-                                "type": "find_by_label"
-                            }
-                        }
-                    },
-                    {
-                        "step_name": "보관 판매 정산 내역 수집",
-                        "action_type": "kream_scrap_2",
-                        "target_url": "https://kream.co.kr/my/inventory?tab=finished&status=payout_completed",
-                        "output_filename": "크림_보관판매",
-                        "list_item_selector": ".inventory_item",
-                        "list_date_selector": ".tab_item.date .value",
-                        "detail_button_selector": ".btn.detail",
-                        "drawer_selector": ".drawer__content",
-                        "drawer_close_button_selector": ".btn_layer_close",
-                        "detail_rules": {
-                            "order_number": {
-                                "column_name": "주문번호",
-                                "selector": ".inventory_product .inventory_number",
-                                "type": "text"
-                            },
-                            "product_name_eng": {
-                                "column_name": "상품명(영문)",
-                                "selector": ".inventory_product .name",
-                                "type": "text"
-                            },
-                            "product_model": {
-                                "column_name": "상품 모델",
-                                "selector": "p.code span.code_text",
-                                "type": "text"
-                            },
-                            "size": {
-                                "column_name": "사이즈",
-                                "selector": ".inventory_product .size_text",
-                                "type": "text"
-                            },
-                            "transaction_date": {
-                                "column_name": "거래 일시",
-                                "label": "거래일시",
-                                "type": "find_by_label_v2"
-                            },
-                            "payout_date": {
-                                "column_name": "정산일",
-                                "selector": ".status_bar_info .info_desc",
-                                "type": "text"
-                            },
-                            "instant_sell_price": {
-                                "column_name": "즉시 판매가",
-                                "label": "판매가",
-                                "type": "find_by_label_v2"
-                            },
-                            "commission_fee": {
-                                "column_name": "수수료",
-                                "label": "수수료",
-                                "type": "find_by_label_v2"
-                            },
-                            "payout_amount": {
-                                "column_name": "정산금액",
-                                "label": "정산금액",
-                                "type": "find_by_label_v2"
-                            }
-                        }
-                    }
-                ]
-            }
-            """,
-            "tab1": """
-            {
-                "site_name": "TAB 1",
-                "steps": []
-            }
-            """,
-            "tab2": """
-            {
-                "site_name": "TAB 2",
-                "steps": []
-            }
-            """,
-            "tab3": """
-            {
-                "site_name": "TAB 3",
-                "steps": []
-            }
-            """
-        }
-        return workflows_by_permission
