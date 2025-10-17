@@ -1,7 +1,7 @@
 import json
 from collections import OrderedDict
 from typing import Dict, Optional
-from PySide6.QtCore import QThread
+from PySide6.QtCore import QThread, Qt
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QTabWidget,
     QLabel, QTextEdit, QMessageBox, QApplication
@@ -201,13 +201,27 @@ class MainWindow(QMainWindow):
             active_tab.progress_bar.setValue(0)
             active_tab.progress_bar.setFormat(f"'{step_name}' 진행 중... %p%")
 
+    def keyPressEvent(self, event):
+        """ESC 키로 창 닫기."""
+        if event.key() == Qt.Key.Key_Escape:
+            reply = QMessageBox.question(
+                self,
+                "종료 확인",
+                "프로그램을 종료하시겠습니까?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No
+            )
+            if reply == QMessageBox.StandardButton.Yes:
+                self.close()
+        super().keyPressEvent(event)
+
     def closeEvent(self, event) -> None:
         """창이 닫힐 때 호출되는 이벤트 핸들러."""
         if self.thread and self.thread.isRunning():
             reply = QMessageBox.question(
                 self, 
                 '종료 확인', 
-                "스크랩핑 작업이 진행 중입니다.\n정말로 종료하시겠습니까?", 
+                "수집 작업이 진행 중입니다.\n정말로 종료하시겠습니까?", 
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, 
                 QMessageBox.StandardButton.No
             )
