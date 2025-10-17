@@ -42,9 +42,57 @@ class KreamTab(QWidget):
         self.folder_button.setFixedHeight(40)
         self.folder_button.setFixedWidth(100)
 
-        self.start_button.setStyleSheet("background-color: #4A90E2; color: white; border-radius: 5px; font-weight: bold;")
-        self.stop_button.setStyleSheet("background-color: #EF5350; color: white; border-radius: 5px; font-weight: bold;")
-        self.folder_button.setStyleSheet("background-color: #757575; color: white; border-radius: 5px; font-weight: bold;")
+        self.start_button.setStyleSheet("""
+            QPushButton {
+                background-color: #4A90E2;
+                color: white;
+                border-radius: 5px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #357ABD;
+            }
+            QPushButton:pressed {
+                background-color: #2868A8;
+            }
+            QPushButton:disabled {
+                background-color: #BDBDBD;
+            }
+        """)
+        self.stop_button.setStyleSheet("""
+            QPushButton {
+                background-color: #EF5350;
+                color: white;
+                border-radius: 5px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #E53935;
+            }
+            QPushButton:pressed {
+                background-color: #C62828;
+            }
+            QPushButton:disabled {
+                background-color: #BDBDBD;
+            }
+        """)
+        self.folder_button.setStyleSheet("""
+            QPushButton {
+                background-color: #757575;
+                color: white;
+                border-radius: 5px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #616161;
+            }
+            QPushButton:pressed {
+                background-color: #424242;
+            }
+            QPushButton:disabled {
+                background-color: #BDBDBD;
+            }
+        """)
 
         self.start_button.setCursor(QCursor(Qt.PointingHandCursor))
         self.stop_button.setCursor(QCursor(Qt.PointingHandCursor))
