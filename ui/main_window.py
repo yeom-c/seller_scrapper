@@ -42,6 +42,10 @@ class MainWindow(QMainWindow):
         main_layout = QVBoxLayout(central_widget)
         main_layout.setContentsMargins(10, 10, 10, 10)
         self.tabs = QTabWidget()
+        
+        # 탭 바에 손가락 커서 적용
+        self.tabs.tabBar().setCursor(Qt.CursorShape.PointingHandCursor)
+        
         main_layout.addWidget(self.tabs)
 
     def _parse_workflows(self, workflows_by_permission: Dict[str, str]) -> Dict[str, Dict]:
