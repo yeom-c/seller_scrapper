@@ -23,9 +23,7 @@ elif sys.platform == 'darwin':
     icon_file = str(root_dir / 'icon.icns')
 
 # 데이터 파일 및 폴더 수집
-datas = [
-    (str(root_dir / 'workflows'), 'workflows'),
-]
+datas = []
 
 # 숨겨진 imports (동적으로 로드되는 모듈)
 hiddenimports = [
