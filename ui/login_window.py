@@ -1,8 +1,9 @@
-from PySide6.QtCore import Signal, Qt
+from PySide6.QtCore import Signal, Qt, QTimer
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
     QLineEdit, QPushButton, QMessageBox, QApplication, QStackedWidget
 )
+from api_client import AuthAPI, APIException, AuthenticationError, ValidationError, NetworkError
 
 
 class LoginWindow(QWidget):
@@ -14,6 +15,7 @@ class LoginWindow(QWidget):
         super().__init__()
         self.setWindowTitle("판매내역 수집기")
         self.setFixedSize(400, 500)
+        self.auth_api = AuthAPI()  # API 클라이언트 초기화
         self._setup_ui()
         self._center_on_screen()
 
@@ -310,7 +312,10 @@ class LoginWindow(QWidget):
         self.setWindowTitle("회원가입")
         self.stacked_widget.setCurrentIndex(1)
         self.register_email_input.setFocus()
-        # 입력 필드 초기화
+        # 로그인 입력 필드 초기화
+        self.email_input.clear()
+        self.password_input.clear()
+        # 회원가입 입력 필드 초기화
         self.register_email_input.clear()
         self.register_password_input.clear()
         self.register_confirm_password_input.clear()
@@ -353,14 +358,53 @@ class LoginWindow(QWidget):
             self.register_confirm_password_input.setFocus()
             return
         
-        # TODO: 실제 회원가입 로직 구현
-        QMessageBox.information(
-            self, 
-            "회원가입 완료", 
-            f"회원가입이 완료되었습니다!\n이메일: {email}\n\n로그인 화면으로 돌아갑니다."
-        )
+        # UI 업데이트 먼저 수행
+        self.register_button.setEnabled(False)
+        self.register_button.setText("처리 중...")
+        self.register_button.repaint()  # 즉시 다시 그리기
         
-        self._show_login_page()
+        # 실제 API 호출을 다음 이벤트 루프로 지연
+        QTimer.singleShot(10, lambda: self._do_register(email, password))
+    
+    def _do_register(self, email: str, password: str):
+        """실제 회원가입 API 호출."""
+        try:
+            # API 호출하여 회원가입
+            response = self.auth_api.register(email=email, password=password)
+            
+            QMessageBox.information(
+                self,
+                "회원가입 완료",
+                f"회원가입이 완료되었습니다!\n이메일: {email}\n\n로그인 화면으로 돌아갑니다."
+            )
+            
+            self._show_login_page()
+            
+        except ValidationError as e:
+            QMessageBox.warning(
+                self,
+                "입력 오류",
+                e.message
+            )
+            
+        except NetworkError as e:
+            QMessageBox.critical(
+                self,
+                "네트워크 오류",
+                f"서버에 연결할 수 없습니다.\n{e.message}\n\n나중에 다시 시도해주세요."
+            )
+            
+        except APIException as e:
+            QMessageBox.critical(
+                self,
+                "회원가입 실패",
+                f"회원가입 중 오류가 발생했습니다.\n{e.message}"
+            )
+            
+        finally:
+            # 버튼 활성화
+            self.register_button.setEnabled(True)
+            self.register_button.setText("회원가입")
     
     def _handle_login(self):
         """로그인 처리."""
@@ -372,8 +416,58 @@ class LoginWindow(QWidget):
             QMessageBox.warning(self, "입력 오류", "이메일과 비밀번호를 입력해주세요.")
             return
         
-        # TODO: 실제 로그인 로직 구현
-        # 임시로 모든 로그인을 성공 처리하고 워크플로우 권한을 부여
+        # UI 업데이트 먼저 수행
+        self.login_button.setEnabled(False)
+        self.login_button.setText("로그인 중...")
+        self.login_button.repaint()  # 즉시 다시 그리기
+        
+        # 실제 API 호출을 다음 이벤트 루프로 지연
+        QTimer.singleShot(10, lambda: self._do_login(email, password))
+    
+    def _do_login(self, email: str, password: str):
+        """실제 로그인 API 호출."""
+        try:
+            # API 호출하여 로그인
+            response = self.auth_api.login(email=email, password=password)
+            
+            # 서버로부터 워크플로우 권한 정보를 받아옴
+            # TODO: 실제 서버 응답 구조에 맞게 수정 필요
+            workflows_by_permission = response.get('workflows', self._get_default_workflows())
+            
+            # 로그인 성공 시그널 발생
+            self.login_successful.emit(workflows_by_permission)
+            self.close()
+            
+        except AuthenticationError as e:
+            QMessageBox.warning(
+                self,
+                "로그인 실패",
+                f"이메일 또는 비밀번호가 올바르지 않습니다.\n{e.message}"
+            )
+            self.password_input.clear()
+            self.password_input.setFocus()
+            
+        except NetworkError as e:
+            QMessageBox.critical(
+                self,
+                "네트워크 오류",
+                f"서버에 연결할 수 없습니다.\n{e.message}\n\n나중에 다시 시도해주세요."
+            )
+            
+        except APIException as e:
+            QMessageBox.critical(
+                self,
+                "로그인 오류",
+                f"로그인 중 오류가 발생했습니다.\n{e.message}"
+            )
+            
+        finally:
+            # 버튼 활성화
+            self.login_button.setEnabled(True)
+            self.login_button.setText("로그인")
+    
+    def _get_default_workflows(self):
+        """기본 워크플로우를 반환합니다 (서버 응답이 없을 경우 사용)."""
         workflows_by_permission = {
             "kream": """
             {
@@ -530,6 +624,4 @@ class LoginWindow(QWidget):
             }
             """
         }
-        
-        self.login_successful.emit(workflows_by_permission)
-        self.close()
+        return workflows_by_permission
