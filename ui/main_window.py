@@ -161,6 +161,10 @@ class MainWindow(QMainWindow):
         if not (active_tab and hasattr(active_tab, 'start_button')):
             return
 
+        # 스크래핑 시작 전 토큰 체크 및 갱신
+        if not self._check_and_refresh_token():
+            return
+
         self._prepare_ui_for_scraping(active_tab)
         self._create_and_start_worker(workflow_data, date_range, active_tab)
 
@@ -256,8 +260,14 @@ class MainWindow(QMainWindow):
         self.token_refresh_timer.timeout.connect(self._check_and_refresh_token)
         self.token_refresh_timer.start(30000)  # 30초마다 체크
 
-    def _check_and_refresh_token(self) -> None:
-        """토큰 갱신이 필요한지 확인하고, 필요하면 갱신합니다."""
+    def _check_and_refresh_token(self) -> bool:
+        """
+        토큰 갱신이 필요한지 확인하고, 필요하면 갱신합니다.
+        작업 중이 아닐 때만 팝업 메시지를 표시합니다.
+            
+        Returns:
+            토큰이 유효하거나 갱신 성공하면 True, 실패하면 False
+        """
         try:
             # 토큰이 60초 이내에 만료되거나 권한이 만료되었는지 확인
             if token_manager.needs_refresh(buffer_seconds=60):
@@ -270,6 +280,7 @@ class MainWindow(QMainWindow):
                 if result.get("success"):
                     # 워크플로우 갱신
                     self._refresh_workflows()
+                    return True
                 else:
                     # 갱신 실패 처리
                     if is_scraping:
@@ -280,14 +291,18 @@ class MainWindow(QMainWindow):
                             "인증 만료(갱신 실패). 작업 완료 후 다시 로그인해주세요.",
                             "orange"
                         )
+                        return False
                     else:
-                        # 작업 중이 아니면 로그아웃 처리
+                        # 작업 중이 아니면 팝업과 함께 로그아웃 처리
                         QMessageBox.critical(
                             self, 
                             "인증 오류",
                             "인증 만료(갱신 실패).\n다시 로그인해주세요."
                         )
                         self._logout()
+                        return False
+            
+            return True  # 갱신 불필요
                     
         except Exception as e:
             # 예외 발생 시 처리
@@ -301,14 +316,16 @@ class MainWindow(QMainWindow):
                     "인증 만료(갱신 실패). 작업 완료 후 다시 로그인해주세요.",
                     "orange"
                 )
+                return False
             else:
-                # 작업 중이 아니면 로그아웃 처리
+                # 작업 중이 아니면 팝업과 함께 로그아웃 처리
                 QMessageBox.critical(
                     self, 
                     "인증 오류", 
                     "인증 만료(갱신 실패).\n다시 로그인해주세요."
                 )
                 self._logout()
+                return False
 
     def _refresh_workflows(self) -> None:
         """워크플로우를 서버에서 다시 가져와 탭을 업데이트합니다."""
