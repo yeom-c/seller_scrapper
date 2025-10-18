@@ -102,12 +102,14 @@ class MainWindow(QMainWindow):
             tab_widget.start_scraping_signal.connect(self.start_scraping)
             tab_widget.stop_button.clicked.connect(self.stop_scraping)
             tab_widget.folder_button.clicked.connect(self.open_current_tab_folder)
+            tab_widget.permission = permission
             return tab_widget
         else:
             # 기타 권한용 기본 탭
             tab_widget = QWidget()
             layout = QVBoxLayout(tab_widget)
             layout.addWidget(QLabel(f"{tab_name} 탭입니다."))
+            tab_widget.permission = permission
             return tab_widget
 
     def _setup_fallback_ui(self) -> None:
@@ -161,8 +163,9 @@ class MainWindow(QMainWindow):
         if not (active_tab and hasattr(active_tab, 'start_button')):
             return
 
-        # 스크래핑 시작 전 토큰 체크 및 갱신
-        if not self._check_and_refresh_token():
+        # 스크래핑 시작 전 토큰 체크 및 갱신 (권한 체크 포함)
+        current_permission = getattr(active_tab, 'permission', None)
+        if not self._check_and_refresh_token(current_permission):
             return
 
         self._prepare_ui_for_scraping(active_tab)
@@ -260,10 +263,13 @@ class MainWindow(QMainWindow):
         self.token_refresh_timer.timeout.connect(self._check_and_refresh_token)
         self.token_refresh_timer.start(30000)  # 30초마다 체크
 
-    def _check_and_refresh_token(self) -> bool:
+    def _check_and_refresh_token(self, check_permission: Optional[str] = None) -> bool:
         """
         토큰 갱신이 필요한지 확인하고, 필요하면 갱신합니다.
-        작업 중이 아닐 때만 팝업 메시지를 표시합니다.
+        
+        Args:
+            check_permission: 체크할 권한명. 제공되면 권한 유효성 확인 후 탭 유지/재생성 결정
+                            None이면 무조건 탭 재생성
             
         Returns:
             토큰이 유효하거나 갱신 성공하면 True, 실패하면 False
@@ -278,9 +284,25 @@ class MainWindow(QMainWindow):
                 result = self.auth_api.refresh_token()
                 
                 if result.get("success"):
-                    # 워크플로우 갱신
-                    self._refresh_workflows()
-                    return True
+                    # 특정 권한 체크가 요청된 경우 (스크래핑 시작 전)
+                    if check_permission:
+                        # token_manager를 통해 권한 유효성 확인
+                        if not token_manager.has_permission(check_permission):
+                            # 권한 없음 - 탭 재생성 필요
+                            QMessageBox.critical(
+                                self,
+                                "권한 오류",
+                                f"권한 만료({check_permission})\n화면을 새로고침합니다."
+                            )
+                            self._refresh_workflows()
+                            return False
+                        
+                        # 권한 유효 - 작업 계속 진행 (탭 유지)
+                        return True
+                    else:
+                        # 일반 갱신 (타이머, 작업 완료 후) - 탭 재생성
+                        self._refresh_workflows()
+                        return True
                 else:
                     # 갱신 실패 처리
                     if is_scraping:
@@ -297,7 +319,7 @@ class MainWindow(QMainWindow):
                         QMessageBox.critical(
                             self, 
                             "인증 오류",
-                            "인증 만료(갱신 실패).\n다시 로그인해주세요."
+                            "인증 만료(갱신 실패)\n다시 로그인해주세요."
                         )
                         self._logout()
                         return False
@@ -322,7 +344,7 @@ class MainWindow(QMainWindow):
                 QMessageBox.critical(
                     self, 
                     "인증 오류", 
-                    "인증 만료(갱신 실패).\n다시 로그인해주세요."
+                    "인증 만료(갱신 실패)\n다시 로그인해주세요."
                 )
                 self._logout()
                 return False
@@ -351,7 +373,7 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(
                 self, 
                 "워크플로우 오류", 
-                "워크플로우 로드 중 오류가 발생했습니다.\n다시 로그인해주세요."
+                "워크플로우 로드 실패.\n다시 로그인해주세요."
             )
             self._logout()
 
