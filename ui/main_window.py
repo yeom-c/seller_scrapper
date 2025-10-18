@@ -220,7 +220,7 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(
                 self,
                 "인증 오류",
-                "인증 오류(3).\n다시 로그인해주세요."
+                "인증 만료.\n다시 로그인해주세요."
             )
             self._logout()
 
@@ -283,15 +283,15 @@ class MainWindow(QMainWindow):
                         active_tab = self.tabs.currentWidget()
                         self.update_log_on_tab(
                             active_tab,
-                            "인증 오류(1). 작업 완료 후 다시 로그인해주세요.",
+                            "인증 만료(갱신 실패). 작업 완료 후 다시 로그인해주세요.",
                             "orange"
                         )
                     else:
                         # 작업 중이 아니면 로그아웃 처리
                         QMessageBox.critical(
                             self, 
-                            "인증 오류", 
-                            "인증 오류(1).\n다시 로그인해주세요."
+                            "인증 오류",
+                            "인증 만료(갱신 실패).\n다시 로그인해주세요."
                         )
                         self._logout()
                     
@@ -304,7 +304,7 @@ class MainWindow(QMainWindow):
                 active_tab = self.tabs.currentWidget()
                 self.update_log_on_tab(
                     active_tab,
-                    "인증 오류(2). 작업 완료 후 다시 로그인해주세요.",
+                    "인증 만료(갱신 실패). 작업 완료 후 다시 로그인해주세요.",
                     "orange"
                 )
             else:
@@ -312,7 +312,7 @@ class MainWindow(QMainWindow):
                 QMessageBox.critical(
                     self, 
                     "인증 오류", 
-                    "인증 오류(2).\n다시 로그인해주세요."
+                    "인증 만료(갱신 실패).\n다시 로그인해주세요."
                 )
                 self._logout()
 
