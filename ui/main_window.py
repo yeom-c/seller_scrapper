@@ -216,13 +216,7 @@ class MainWindow(QMainWindow):
             return
         
         # 작업 완료 후 토큰이 만료되었는지 확인
-        if token_manager.is_token_expired():
-            QMessageBox.critical(
-                self,
-                "인증 오류",
-                "인증 만료.\n다시 로그인해주세요."
-            )
-            self._logout()
+        self._check_and_refresh_token()
 
     def _cleanup_thread(self) -> None:
         """스레드 정리"""
