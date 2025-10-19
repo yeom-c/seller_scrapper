@@ -1,25 +1,14 @@
-from .client import APIClient
-from .auth import AuthAPI
-from .workflow import WorkflowAPI
 from .token_manager import TokenManager, Permission, token_manager
-from .exceptions import (
-    APIException,
-    AuthenticationError,
-    NetworkError,
-    ValidationError,
-    ServerError
-)
+from .config import config
+from . import auth
+from . import workflow
 
 __all__ = [
-    'APIClient',
-    'AuthAPI',
-    'WorkflowAPI',
+    'auth',
+    'workflow',
     'TokenManager',
     'Permission',
     'token_manager',
-    'APIException',
-    'AuthenticationError',
-    'NetworkError',
-    'ValidationError',
-    'ServerError'
+    'config'
 ]
+

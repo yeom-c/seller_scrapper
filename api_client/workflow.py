@@ -1,50 +1,42 @@
-from typing import Dict, Any, Optional
-from .client import APIClient
+from typing import Dict
+from .supabase_client import supabase
 
 
-class WorkflowAPI:
-    """워크플로우 관련 API를 처리하는 클래스."""
+def get_workflows() -> Dict[str, str]:
+    """
+    사용자의 권한에 맞는 워크플로우 목록을 가져옵니다.
+    Supabase RPC 함수(get_user_workflows)를 호출하여 조회합니다.
     
-    def __init__(self, client: Optional[APIClient] = None):
-        """
-        WorkflowAPI 초기화.
+    Returns:
+        권한별 워크플로우 JSON 문자열 딕셔너리
+        예: {
+            "kream": '{"site_name": "크림", "steps": [...]}',
+        }
+    """
+    try:
+        # RPC 함수 직접 호출
+        response = supabase.rpc('get_user_workflows').execute()
         
-        Args:
-            client: APIClient 인스턴스 (None인 경우 새로 생성)
-        """
-        self.client = client or APIClient()
-    
-    def get_workflows(self) -> Dict[str, str]:
-        """
-        사용자의 워크플로우 목록을 가져옵니다.
+        if not response.data:
+            return {}
         
-        Returns:
-            권한별 워크플로우 JSON 문자열 딕셔너리
-            예: {
-                "kream": "{ workflow json string }",
-                "tab1": "{ workflow json string }"
-            }
-            
-        Raises:
-            AuthenticationError: 인증 실패
-            APIException: API 에러 발생
-        """
-        response = self.client.get('/workflows')
-        return response.get('workflows', {})
-    
-    def get_workflow(self, permission: str) -> Dict[str, Any]:
-        """
-        특정 권한의 워크플로우를 가져옵니다.
+        # 결과를 {permission_name: workflow_json} 형태로 변환
+        workflows = {}
         
-        Args:
-            permission: 권한 이름 (예: 'kream')
+        for item in response.data:
+            permission_name = item.get('permission_name')
+            workflow_json = item.get('workflow_json')
             
-        Returns:
-            워크플로우 데이터
-            
-        Raises:
-            NotFoundError: 워크플로우를 찾을 수 없음
-            APIException: API 에러 발생
-        """
-        response = self.client.get(f'/workflows/{permission}')
-        return response
+            if permission_name and workflow_json:
+                # workflow_json이 dict면 JSON 문자열로 변환
+                if isinstance(workflow_json, dict):
+                    import json
+                    workflows[permission_name] = json.dumps(workflow_json, ensure_ascii=False)
+                else:
+                    workflows[permission_name] = workflow_json
+        
+        return workflows
+        
+    except Exception as e:
+        return {}
+

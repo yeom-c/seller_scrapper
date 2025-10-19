@@ -3,10 +3,7 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
     QLineEdit, QPushButton, QMessageBox, QApplication, QStackedWidget
 )
-from api_client import (
-    AuthAPI, APIException, AuthenticationError, 
-    ValidationError, NetworkError
-)
+from api_client import auth
 
 
 class LoginWindow(QWidget):
@@ -18,7 +15,6 @@ class LoginWindow(QWidget):
         super().__init__()
         self.setWindowTitle("판매내역 수집기")
         self.setFixedSize(400, 500)
-        self.auth_api = AuthAPI()  # API 클라이언트 초기화
         self._setup_ui()
         self._center_on_screen()
 
@@ -373,34 +369,27 @@ class LoginWindow(QWidget):
         """실제 회원가입 API 호출."""
         try:
             # API 호출하여 회원가입
-            response = self.auth_api.register(email=email, password=password)
+            response = auth.register(email=email, password=password)
             
-            QMessageBox.information(
-                self,
-                "회원가입 완료",
-                f"회원가입이 완료되었습니다!\n이메일: {email}\n\n로그인 화면으로 돌아갑니다."
-            )
+            if response.get('success'):
+                QMessageBox.information(
+                    self,
+                    "회원가입 완료",
+                    f"회원가입이 완료되었습니다!\n이메일: {email}\n"
+                )
+                self._show_login_page()
+            else:
+                error_message = response.get('message', '회원가입 중 오류가 발생했습니다.')
+                QMessageBox.warning(
+                    self,
+                    "회원가입 실패",
+                    error_message
+                )
             
-            self._show_login_page()
-            
-        except ValidationError as e:
-            QMessageBox.warning(
-                self,
-                "입력 오류",
-                e.message
-            )
-            
-        except NetworkError as e:
+        except Exception as e:
             QMessageBox.critical(
                 self,
-                "네트워크 오류",
-                "서버에 연결할 수 없습니다.\n나중에 다시 시도해주세요."
-            )
-            
-        except APIException as e:
-            QMessageBox.critical(
-                self,
-                "회원가입 실패",
+                "회원가입 오류",
                 "회원가입 중 오류가 발생했습니다."
             )
             
@@ -431,33 +420,27 @@ class LoginWindow(QWidget):
         """실제 로그인 API 호출."""
         try:
             # 로그인 API 호출하여 JWT 토큰 받기
-            response = self.auth_api.login(email=email, password=password)
+            response = auth.login(email=email, password=password)
             
-            # 로그인 성공 시그널 발생 (워크플로우는 MainWindow에서 로드)
-            self.login_successful.emit()
-            self.close()
+            if response.get('success'):
+                # 로그인 성공 시그널 발생 (워크플로우는 MainWindow에서 로드)
+                self.login_successful.emit()
+                self.close()
+            else:
+                error_message = response.get('message', '로그인 중 오류가 발생했습니다.')
+                QMessageBox.warning(
+                    self,
+                    "로그인 실패",
+                    error_message
+                )
+                self.password_input.clear()
+                self.password_input.setFocus()
             
-        except AuthenticationError as e:
-            QMessageBox.warning(
-                self,
-                "로그인 실패",
-                "이메일 또는 비밀번호가 올바르지 않습니다."
-            )
-            self.password_input.clear()
-            self.password_input.setFocus()
-            
-        except NetworkError as e:
-            QMessageBox.critical(
-                self,
-                "네트워크 오류",
-                "서버에 연결할 수 없습니다.\n나중에 다시 시도해주세요."
-            )
-            
-        except APIException as e:
+        except Exception as e:
             QMessageBox.critical(
                 self,
                 "로그인 오류",
-                "로그인 중 오류가 발생했습니다."
+                f"로그인 중 오류가 발생했습니다:\n{str(e)}"
             )
             
         finally:

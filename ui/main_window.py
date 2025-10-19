@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
 from scraping_worker import ScraperWorker
 from .tabs.kream_tab import KreamTab
 from utils.system_handler import open_output_folder
-from api_client import AuthAPI, WorkflowAPI, token_manager
+from api_client import auth, workflow, token_manager
 
 class MainWindow(QMainWindow):
     """애플리케이션의 메인 윈도우 (컨테이너 역할)."""
@@ -24,10 +24,6 @@ class MainWindow(QMainWindow):
         self.thread: Optional[QThread] = None
         self.worker: Optional[ScraperWorker] = None
         self._is_closing = False
-        
-        # API 클라이언트 초기화
-        self.auth_api = AuthAPI()
-        self.workflow_api = WorkflowAPI()
 
         self._setup_ui()
         self._center_on_screen()
@@ -281,7 +277,7 @@ class MainWindow(QMainWindow):
                 is_scraping = self.thread is not None and self.thread.isRunning()
                 
                 # 토큰 갱신 시도
-                result = self.auth_api.refresh_token()
+                result = auth.refresh_token()
                 
                 if result.get("success"):
                     # 특정 권한 체크가 요청된 경우 (스크래핑 시작 전)
@@ -353,7 +349,7 @@ class MainWindow(QMainWindow):
         """워크플로우를 서버에서 다시 가져와 탭을 업데이트합니다."""
         try:
             # 워크플로우 가져오기
-            workflows = self.workflow_api.get_workflows()
+            workflows = workflow.get_workflows()
             
             if not workflows:
                 # 워크플로우가 없는 경우 중앙 안내 화면 표시
@@ -384,7 +380,7 @@ class MainWindow(QMainWindow):
             self.token_refresh_timer.stop()
         
         # 토큰 정리
-        self.auth_api.logout()
+        auth.logout()
         
         # 로그아웃 시그널 발생 (MainApplication이 처리)
         self.logout_requested.emit()

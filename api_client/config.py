@@ -5,59 +5,38 @@ from typing import Optional
 class APIConfig:
     """API 설정을 관리하는 클래스."""
     
-    # 기본 설정값
-    DEFAULT_BASE_URL = "http://localhost:8000/api"
-    DEFAULT_TIMEOUT = 10
-    DEFAULT_MAX_RETRIES = 2
-    DEFAULT_RETRY_MAX_DELAY = 3  # 재시도 최대 대기 시간 (초)
+    # Supabase 기본 설정
+    DEFAULT_SUPABASE_URL = "https://ewzhqloswstzhtbgpelv.supabase.co"
+    DEFAULT_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV3emhxbG9zd3N0emh0YmdwZWx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3OTQzMDAsImV4cCI6MjA3NjM3MDMwMH0.uQHeHIcfM7Lh0PT-dAXDO3k1UInr4a6p0R3giCH4Icw"
     
     def __init__(self):
-        self._base_url: str = os.getenv("API_BASE_URL", self.DEFAULT_BASE_URL)
-        self._timeout: int = int(os.getenv("API_TIMEOUT", str(self.DEFAULT_TIMEOUT)))
-        self._max_retries: int = int(os.getenv("API_MAX_RETRIES", str(self.DEFAULT_MAX_RETRIES)))
-        self._retry_max_delay: int = int(os.getenv("API_RETRY_MAX_DELAY", str(self.DEFAULT_RETRY_MAX_DELAY)))
+        # Supabase 설정
+        self._supabase_url: str = os.getenv("SUPABASE_URL", self.DEFAULT_SUPABASE_URL)
+        self._supabase_anon_key: str = os.getenv("SUPABASE_ANON_KEY", self.DEFAULT_SUPABASE_ANON_KEY)
+        
+        # 토큰 관리
         self._access_token: Optional[str] = None
         self._refresh_token: Optional[str] = None
     
     @property
-    def base_url(self) -> str:
-        """API 베이스 URL을 반환합니다."""
-        return self._base_url
+    def supabase_url(self) -> str:
+        """Supabase URL을 반환합니다."""
+        return self._supabase_url
     
-    @base_url.setter
-    def base_url(self, value: str) -> None:
-        """API 베이스 URL을 설정합니다."""
-        self._base_url = value.rstrip('/')
-    
-    @property
-    def timeout(self) -> int:
-        """타임아웃 값을 반환합니다."""
-        return self._timeout
-    
-    @timeout.setter
-    def timeout(self, value: int) -> None:
-        """타임아웃 값을 설정합니다."""
-        self._timeout = value
+    @supabase_url.setter
+    def supabase_url(self, value: str) -> None:
+        """Supabase URL을 설정합니다."""
+        self._supabase_url = value.rstrip('/')
     
     @property
-    def max_retries(self) -> int:
-        """최대 재시도 횟수를 반환합니다."""
-        return self._max_retries
+    def supabase_anon_key(self) -> str:
+        """Supabase Anon Key를 반환합니다."""
+        return self._supabase_anon_key
     
-    @max_retries.setter
-    def max_retries(self, value: int) -> None:
-        """최대 재시도 횟수를 설정합니다."""
-        self._max_retries = value
-    
-    @property
-    def retry_max_delay(self) -> int:
-        """재시도 최대 대기 시간을 반환합니다."""
-        return self._retry_max_delay
-    
-    @retry_max_delay.setter
-    def retry_max_delay(self, value: int) -> None:
-        """재시도 최대 대기 시간을 설정합니다."""
-        self._retry_max_delay = value
+    @supabase_anon_key.setter
+    def supabase_anon_key(self, value: str) -> None:
+        """Supabase Anon Key를 설정합니다."""
+        self._supabase_anon_key = value
     
     @property
     def access_token(self) -> Optional[str]:

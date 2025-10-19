@@ -66,14 +66,15 @@ class TokenManager:
             # 토큰 만료 시간
             self._token_exp = payload.get('exp')
             
-            # 권한 정보 파싱
+            # 권한 정보 파싱 (user_metadata 안에 있음)
             self._permissions = []
-            permissions_data = payload.get('permissions', [])
+            user_metadata = payload.get('user_metadata', {})
+            permissions_data = user_metadata.get('permissions', {})
             
-            for perm_dict in permissions_data:
-                for name, info in perm_dict.items():
-                    exp = info.get('exp', 0)
-                    self._permissions.append(Permission(name, exp))
+            # permissions는 dict 형태: {"kream": {"exp": 1234567890}}
+            for name, info in permissions_data.items():
+                exp = info.get('exp', 0)
+                self._permissions.append(Permission(name, exp))
         
         except Exception as e:
             print(f"토큰 파싱 오류: {e}")
