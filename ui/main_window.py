@@ -175,6 +175,12 @@ class MainWindow(QMainWindow):
         active_tab.stop_button.setEnabled(True)
         active_tab.log_edit.clear()
         active_tab.progress_bar.setValue(0)
+        
+        # 현재 탭을 제외한 모든 탭 비활성화
+        current_index = self.tabs.indexOf(active_tab)
+        for i in range(self.tabs.count()):
+            if i != current_index:
+                self.tabs.setTabEnabled(i, False)
 
     def _create_and_start_worker(self, workflow_data: Dict, date_range: Dict, active_tab: QWidget) -> None:
         """워커 스레드를 생성하고 시작합니다."""
@@ -213,6 +219,10 @@ class MainWindow(QMainWindow):
         if hasattr(active_tab, 'start_button'):
             active_tab.start_button.setEnabled(True)
             active_tab.stop_button.setEnabled(False)
+        
+        # 모든 탭 다시 활성화
+        for i in range(self.tabs.count()):
+            self.tabs.setTabEnabled(i, True)
         
         self._cleanup_thread()
 
