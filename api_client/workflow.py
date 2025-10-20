@@ -36,7 +36,7 @@ def get_workflows() -> Dict[str, str]:
             
             if permission and workflow:
                 # workflow_json이 dict면 JSON 문자열로 변환
-                permission_type = permission.get('type').lower()
+                permission_type = permission.get('type')
                 workflow_json = workflow.get('workflow_json')
                 if workflow_json:
                     if isinstance(workflow_json, dict):

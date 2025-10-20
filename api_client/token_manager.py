@@ -111,16 +111,16 @@ class TokenManager:
         """권한 목록을 반환합니다."""
         return self._permissions.copy()
     
-    def get_permission(self, name: str) -> Optional[Permission]:
+    def get_permission(self, type: str) -> Optional[Permission]:
         """특정 권한을 반환합니다."""
         for perm in self._permissions:
-            if perm.name == name:
+            if perm.type == type:
                 return perm
         return None
-    
-    def has_permission(self, name: str) -> bool:
+
+    def has_permission(self, type: str) -> bool:
         """특정 권한이 있고 만료되지 않았는지 확인합니다."""
-        perm = self.get_permission(name)
+        perm = self.get_permission(type)
         return perm is not None and not perm.is_expired()
     
     def is_token_expired(self) -> bool:
@@ -153,7 +153,7 @@ class TokenManager:
         # 토큰 자체가 만료되었거나 곧 만료될 예정 (버퍼 적용)
         if self.token_expires_in() < buffer_seconds:
             return True
-        
+
         # 권한 중 하나라도 실제로 만료됨 (버퍼 없음, 현재 시간 이후만 체크)
         for perm in self._permissions:
             if perm.is_expired():
@@ -176,6 +176,8 @@ class TokenManager:
             'token_expires_in': self.token_expires_in(),
             'permissions': [
                 {
+                    'type': perm.type,
+                    'payment_type': perm.payment_type,
                     'name': perm.name,
                     'expired': perm.is_expired(),
                     'expires_in': perm.expires_in()

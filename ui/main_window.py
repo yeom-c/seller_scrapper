@@ -9,7 +9,8 @@ from PySide6.QtWidgets import (
 from scraping_worker import ScraperWorker
 from .tabs.kream_tab import KreamTab
 from utils.system_handler import open_output_folder
-from api_client import auth, workflow, token_manager
+from api_client import auth, workflow
+from api_client.token_manager import token_manager, Permission
 
 class MainWindow(QMainWindow):
     """애플리케이션의 메인 윈도우 (컨테이너 역할)."""
@@ -62,8 +63,7 @@ class MainWindow(QMainWindow):
         
         for permission, workflow_json_string in workflows_by_permission.items():
             try:
-                # JSON 파싱 시 순서 보장을 위해 object_pairs_hook 사용
-                workflow_data = json.loads(workflow_json_string, object_pairs_hook=OrderedDict)
+                workflow_data = json.loads(workflow_json_string)
                 parsed_workflows[permission] = workflow_data
             except json.JSONDecodeError:
                 error_msg = f"'{permission}' 권한의 워크플로우 JSON 형식이 잘못되었습니다."
@@ -81,31 +81,33 @@ class MainWindow(QMainWindow):
 
     def _create_tabs(self) -> None:
         """워크플로우 객체를 기반으로 탭 위젯을 생성하고 추가합니다."""
-        if not self.authorized_workflows:
-            self._setup_fallback_ui()
-            self.update_log_on_tab(self.tabs.widget(0), "표시할 수 있는 작업이 없습니다.", "orange")
-            return
-
-        for permission, workflow_data in self.authorized_workflows.items():
-            tab_name = workflow_data.get("site_name", permission.upper())
-            tab_widget = self._create_tab_widget(permission, workflow_data, tab_name)
+        # perm_type을 기준으로 워크플로우를 정렬하여 탭 순서를 고정
+        for perm_type, workflow_data in sorted(self.authorized_workflows.items()):
+            tab_name = perm_type.upper()
+            # 해당 탭에 대한 권한 정보 찾기
+            permission_obj = token_manager.get_permission(perm_type)
+            
+            tab_widget = self._create_tab_widget(perm_type, workflow_data, permission_obj)
             self.tabs.addTab(tab_widget, tab_name)
 
-    def _create_tab_widget(self, permission: str, workflow_data: Dict, tab_name: str) -> QWidget:
+    def _create_tab_widget(self, permission_type: str, workflow_data: Dict, permission_obj: Optional[Permission]) -> QWidget:
         """개별 탭 위젯을 생성합니다."""
-        if permission == 'kream':
-            tab_widget = KreamTab(workflow_data)
+        # 'KREAM' 권한에 대한 탭 생성
+        if permission_type.upper() == 'KREAM':
+            # KreamTab에 워크플로우 데이터와 권한 객체를 함께 전달
+            tab_widget = KreamTab(workflow_data, permission_obj)
             tab_widget.start_scraping_signal.connect(self.start_scraping)
             tab_widget.stop_button.clicked.connect(self.stop_scraping)
             tab_widget.folder_button.clicked.connect(self.open_current_tab_folder)
-            tab_widget.permission = permission
+            tab_widget.permission_type = permission_type
             return tab_widget
         else:
             # 기타 권한용 기본 탭
             tab_widget = QWidget()
             layout = QVBoxLayout(tab_widget)
             layout.addWidget(QLabel("업데이트 예정입니다."))
-            tab_widget.permission = permission
+            # 탭 위젯에 권한 '타입'을 저장
+            tab_widget.permission_type = permission_type
             return tab_widget
 
     def _setup_fallback_ui(self) -> None:
@@ -160,8 +162,8 @@ class MainWindow(QMainWindow):
             return
 
         # 스크래핑 시작 전 토큰 체크 및 갱신 (권한 체크 포함)
-        current_permission = getattr(active_tab, 'permission', None)
-        if not self._check_and_refresh_token(current_permission):
+        current_permission_type = getattr(active_tab, 'permission_type', None)
+        if not self._check_and_refresh_token(current_permission_type):
             return
 
         self._prepare_ui_for_scraping(active_tab)
@@ -276,42 +278,41 @@ class MainWindow(QMainWindow):
                 # 작업 진행 중인지 확인
                 is_scraping = self.thread is not None and self.thread.isRunning()
                 
-                # 토큰 갱신 시도
-                result = auth.refresh_token()
-                
-                if result.get("success"):
-                    # 특정 권한 체크가 요청된 경우 (스크래핑 시작 전)
-                    if check_permission:
-                        # token_manager를 통해 권한 유효성 확인
-                        if not token_manager.has_permission(check_permission):
-                            # 권한 없음 - 탭 재생성 필요
-                            QMessageBox.critical(
-                                self,
-                                "권한 오류",
-                                f"권한 만료({check_permission})\n화면을 새로고침합니다."
-                            )
-                            self._refresh_workflows()
-                            return False
-                        
-                        # 권한 유효 - 작업 계속 진행 (탭 유지)
-                        return True
-                    else:
-                        # 일반 갱신 (타이머, 작업 완료 후) - 탭 재생성
-                        self._refresh_workflows()
-                        return True
+                if is_scraping:
+                    # 수집 작업 중이면 로그에만 경고 표시 (로그아웃하지 않음)
+                    active_tab = self.tabs.currentWidget()
+                    self.update_log_on_tab(
+                        active_tab,
+                        "인증 업데이트 필요. 작업 완료 후 진행합니다.",
+                        "orange"
+                    )
+                    return False
                 else:
-                    # 갱신 실패 처리
-                    if is_scraping:
-                        # 수집 작업 중이면 로그에만 경고 표시 (로그아웃하지 않음)
-                        active_tab = self.tabs.currentWidget()
-                        self.update_log_on_tab(
-                            active_tab,
-                            "인증 만료(갱신 실패). 작업 완료 후 다시 로그인해주세요.",
-                            "orange"
-                        )
-                        return False
+                    # 토큰 갱신 시도
+                    result = auth.refresh_token()
+
+                    if result.get("success"):
+                        # 특정 권한 체크가 요청된 경우
+                        if check_permission:
+                            # token_manager를 통해 권한 유효성 확인
+                            if not token_manager.has_permission(check_permission):
+                                # 권한 없음 - 탭 재생성 필요
+                                QMessageBox.critical(
+                                    self,
+                                    "권한 오류",
+                                    f"권한 만료({check_permission})\n화면을 새로고침합니다."
+                                )
+                                self._refresh_workflows()
+                                return False
+                            
+                            # 권한 유효 - 작업 계속 진행 (탭 유지)
+                            return True
+                        else:
+                            # 일반 갱신 (타이머, 작업 완료 후) - 탭 재생성
+                            self._refresh_workflows()
+                            return True
                     else:
-                        # 작업 중이 아니면 팝업과 함께 로그아웃 처리
+                        # 갱신 실패 처리
                         QMessageBox.critical(
                             self, 
                             "인증 오류",
