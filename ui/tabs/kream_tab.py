@@ -6,7 +6,7 @@ from PySide6.QtWidgets import (
 )
 
 from api_client.token_manager import Permission
-
+from api_client import token_manager
 
 class KreamTab(QWidget):
     """KREAM 탭의 UI와 시그널을 관리하는 독립적인 위젯 클래스."""
@@ -153,8 +153,8 @@ class KreamTab(QWidget):
         if self.permission:
             self.permission_name_label.setText(self.permission.name)
             
-            remaining_seconds = self.permission.expires_in()
-            is_expired = self.permission.is_expired()
+            remaining_seconds = token_manager.permission_expires_in(self.permission)
+            is_expired = token_manager.is_permission_expired(self.permission)
 
             # 색상 테마 정의
             themes = {
