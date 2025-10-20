@@ -13,7 +13,7 @@ class LoginWindow(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("판매내역 수집기")
+        self.setWindowTitle("판매자 수집기")
         self.setFixedSize(400, 500)
         self._setup_ui()
         self._center_on_screen()

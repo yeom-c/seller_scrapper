@@ -50,7 +50,7 @@ class KreamScrap1Strategy(ScrapingStrategy):
                 
                 # TRIAL 사용자의 경우 최대 개수 제한
                 if max_items and len(filtered_items) >= max_items:
-                    self.log_handler(f"무료 권한은 최대 {max_items}개까지만 수집 가능합니다.", "red")
+                    self.log_handler(f"체험판은 최대 {max_items}개까지만 수집 가능합니다.", "red")
                     break
         
         return filtered_items

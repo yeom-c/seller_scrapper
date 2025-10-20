@@ -3,8 +3,8 @@ from collections import OrderedDict
 from typing import Dict, Optional
 from PySide6.QtCore import QThread, Qt, QTimer, Signal
 from PySide6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QTabWidget,
-    QLabel, QTextEdit, QMessageBox, QApplication
+    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QTabWidget,
+    QLabel, QTextEdit, QMessageBox, QApplication, QPushButton
 )
 from scraping_worker import ScraperWorker
 from .tabs.kream_tab import KreamTab
@@ -20,8 +20,8 @@ class MainWindow(QMainWindow):
     
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("판매내역 수집기")
-        self.resize(800, 600)
+        self.setWindowTitle("판매자 수집기")
+        self.resize(1200, 600)
         self.thread: Optional[QThread] = None
         self.worker: Optional[ScraperWorker] = None
         self._is_closing = False
@@ -89,6 +89,9 @@ class MainWindow(QMainWindow):
             
             tab_widget = self._create_tab_widget(perm_type, workflow_data, permission_obj)
             self.tabs.addTab(tab_widget, tab_name)
+        
+        # 이용권 탭을 마지막에 추가
+        self._add_pricing_tab()
 
     def _create_tab_widget(self, permission_type: str, workflow_data: Dict, permission_obj: Optional[Permission]) -> QWidget:
         """개별 탭 위젯을 생성합니다."""
@@ -122,35 +125,216 @@ class MainWindow(QMainWindow):
         layout.addWidget(log_edit)
         fallback_tab.log_edit = log_edit
 
-    def _show_no_workflow_message(self) -> None:
-        """워크플로우가 없을 때 중앙에 안내 메시지를 표시합니다."""
-        # 모든 탭 제거
-        while self.tabs.count() > 0:
-            self.tabs.removeTab(0)
-        
-        # 안내 메시지 탭 생성
-        message_tab = QWidget()
-        self.tabs.addTab(message_tab, "안내")
-        
-        layout = QVBoxLayout(message_tab)
-        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
-        # 메시지 라벨
-        message_label = QLabel(
-            "사용 가능한 워크플로우가 없습니다.\n\n"
-            "관리자에게 문의바랍니다."
-        )
-        message_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        message_label.setStyleSheet("""
-            QLabel {
-                font-size: 18px;
-                color: #666;
-                padding: 40px;
-                line-height: 1.6;
+    def _add_pricing_tab(self) -> None:
+        """이용권 탭을 추가합니다."""
+        # 이용권 탭 생성
+        pricing_tab = QWidget()
+        pricing_tab.setStyleSheet("""
+            QWidget {
+                border-radius: 8px;
+                background-color: #fafafa;
             }
         """)
         
-        layout.addWidget(message_label)
+        main_layout = QVBoxLayout(pricing_tab)
+        main_layout.setContentsMargins(10, 10, 10, 10)
+        main_layout.setSpacing(20)
+        
+        # === 상단: 타이틀 ===
+        title_label = QLabel("지금 시작하고 더 많은 판매 데이터를 확보하세요")
+        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        title_label.setStyleSheet("""
+            QLabel {
+                font-size: 24px;
+                font-weight: 600;
+                color: #1a1a1a;
+            }
+        """)
+        
+        main_layout.addWidget(title_label)
+        
+        # === 하단: 가격 플랜 섹션 ===
+        # 중앙 정렬을 위한 컨테이너
+        plans_container = QWidget()
+        plans_container.setStyleSheet("background-color: transparent;")
+        plans_container_layout = QHBoxLayout(plans_container)
+        plans_container_layout.setContentsMargins(0, 0, 0, 0)
+        plans_container_layout.addStretch()
+        
+        plans_widget = QWidget()
+        plans_widget.setStyleSheet("background-color: transparent;")
+        plans_widget.setMaximumWidth(1200)  # 최대 너비 제한 증가
+        plans_layout = QHBoxLayout(plans_widget)
+        plans_layout.setSpacing(20)
+        
+        # 플랜 데이터
+        plans = [
+            {
+                "name": "체험판",
+                "price": "무료",
+                "period": "1시간",
+                "features": [
+                    "최대 15개 수집",
+                    "KREAM 판매내역"
+                ]
+            },
+            {
+                "name": "하루",
+                "price": "₩1,000",
+                "period": "1일",
+                "features": [
+                    "무제한 수집",
+                    "특정 기능 1개 이용"
+                ]
+            },
+            {
+                "name": "한달",
+                "price": "₩9,900",
+                "period": "30일",
+                "features": [
+                    "무제한 수집",
+                    "모든 기능 이용",
+                    "추가 기능 업데이트"
+                ]
+            },
+            {
+                "name": "평생",
+                "price": "₩19,900",
+                "period": "100년",
+                "features": [
+                    "무제한 수집",
+                    "모든 기능 이용",
+                    "추가 기능 업데이트"
+                ]
+            }
+        ]
+        
+        for plan in plans:
+            plan_card = self._create_plan_card(plan)
+            plans_layout.addWidget(plan_card)
+        
+        plans_container_layout.addWidget(plans_widget)
+        plans_container_layout.addStretch()
+        
+        main_layout.addWidget(plans_container)
+        main_layout.addStretch()
+        
+        # 이용권 탭을 마지막에 추가
+        self.tabs.addTab(pricing_tab, "요금제")
+    
+    def _create_plan_card(self, plan: dict) -> QWidget:
+        """개별 플랜 카드를 생성합니다."""
+        card = QWidget()
+        card.setFixedWidth(260)  # 고정 너비 설정
+        card.setFixedHeight(280)  # 고정 높이 설정
+        card_layout = QVBoxLayout(card)
+        card_layout.setSpacing(0)
+        card_layout.setContentsMargins(0, 0, 0, 0)
+        
+        # 카드 컨테이너
+        container = QWidget()
+        container.setStyleSheet("background-color: transparent; border: none;")
+        container_layout = QVBoxLayout(container)
+        container_layout.setContentsMargins(24, 24, 24, 24)
+        container_layout.setSpacing(16)
+        
+        # 플랜 이름
+        name_label = QLabel(plan["name"])
+        name_label.setStyleSheet("""
+            QLabel {
+                font-size: 16px;
+                font-weight: 600;
+                color: #1a1a1a;
+            }
+        """)
+        container_layout.addWidget(name_label)
+        
+        # 가격
+        price_layout = QHBoxLayout()
+        price_layout.setContentsMargins(0, 0, 0, 0)
+        price_layout.setSpacing(4)
+        
+        price_label = QLabel(plan["price"])
+        price_label.setStyleSheet("""
+            QLabel {
+                font-size: 28px;
+                font-weight: 700;
+                color: #0f172a;
+            }
+        """)
+        
+        period_label = QLabel(f"/ {plan['period']}")
+        period_label.setStyleSheet("""
+            QLabel {
+                font-size: 14px;
+                color: #64748b;
+                padding-top: 8px;
+            }
+        """)
+        
+        price_layout.addWidget(price_label)
+        price_layout.addWidget(period_label)
+        price_layout.addStretch()
+        
+        container_layout.addLayout(price_layout)
+        container_layout.addSpacing(8)
+        
+        # 구분선
+        separator = QWidget()
+        separator.setFixedHeight(1)
+        separator.setStyleSheet("background-color: #e2e8f0;")
+        container_layout.addWidget(separator)
+        container_layout.addSpacing(8)
+        
+        # 기능 목록
+        for feature in plan["features"]:
+            feature_layout = QHBoxLayout()
+            feature_layout.setContentsMargins(0, 0, 0, 0)
+            feature_layout.setSpacing(8)
+            
+            # 체크마크
+            check_label = QLabel("✓")
+            check_label.setStyleSheet("""
+                QLabel {
+                    font-size: 14px;
+                    color: #10b981;
+                    font-weight: bold;
+                }
+            """)
+            check_label.setFixedWidth(16)
+            
+            # 기능 텍스트
+            feature_label = QLabel(feature)
+            feature_label.setStyleSheet("""
+                QLabel {
+                    font-size: 13px;
+                    color: #475569;
+                }
+            """)
+            feature_label.setWordWrap(True)
+            
+            feature_layout.addWidget(check_label)
+            feature_layout.addWidget(feature_label, 1)
+            
+            container_layout.addLayout(feature_layout)
+        
+        container_layout.addStretch()
+        
+        card_layout.addWidget(container)
+        
+        # 모든 카드 동일한 스타일
+        card.setStyleSheet("""
+            QWidget {
+                background-color: white;
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+            }
+            QWidget:hover {
+                border: 1px solid #cbd5e1;
+            }
+        """)
+        
+        return card
 
     def open_current_tab_folder(self) -> None:
         """현재 활성화된 탭에 해당하는 output 하위 폴더를 엽니다."""
@@ -170,6 +354,7 @@ class MainWindow(QMainWindow):
 
         self._prepare_ui_for_scraping(active_tab)
         self._create_and_start_worker(workflow_data, date_range, active_tab)
+
 
     def _prepare_ui_for_scraping(self, active_tab: QWidget) -> None:
         """스크래핑 시작을 위한 UI 준비"""
@@ -272,10 +457,10 @@ class MainWindow(QMainWindow):
             active_tab.progress_bar.setFormat(f"'{step_name}' 진행 중... %p%")
 
     def _start_token_refresh_timer(self) -> None:
-        """토큰 갱신 타이머를 시작합니다. 30초마다 토큰 상태를 확인합니다."""
+        """토큰 갱신 타이머를 시작합니다. 20초마다 토큰 상태를 확인합니다."""
         self.token_refresh_timer = QTimer(self)
         self.token_refresh_timer.timeout.connect(self._check_and_refresh_token)
-        self.token_refresh_timer.start(30000)  # 30초마다 체크
+        self.token_refresh_timer.start(20000)  # 20초마다 체크
 
     def _check_and_refresh_token(self, check_permission: Optional[str] = None) -> bool:
         """
@@ -365,19 +550,19 @@ class MainWindow(QMainWindow):
     def _refresh_workflows(self) -> None:
         """워크플로우를 서버에서 다시 가져와 탭을 업데이트합니다."""
         try:
-            # 워크플로우 가져오기
-            workflows = workflow.get_workflows()
-            
-            if not workflows:
-                # 워크플로우가 없는 경우 중앙 안내 화면 표시
-                self._show_no_workflow_message()
-                return
-            
             # 기존 탭 모두 제거
             while self.tabs.count() > 0:
                 self.tabs.removeTab(0)
             
-            # 워크플로우 파싱 및 탭 재생성
+            # 워크플로우 가져오기
+            workflows = workflow.get_workflows()
+            
+            if not workflows:
+                # 워크플로우가 없는 경우 이용권 탭만 표시
+                self._add_pricing_tab()
+                return
+            
+            # 워크플로우 파싱 및 탭 재생성 (이용권 탭은 _create_tabs에서 자동 추가됨)
             self.authorized_workflows = self._parse_workflows(workflows)
             self._create_tabs()
             self._show_parsing_errors()

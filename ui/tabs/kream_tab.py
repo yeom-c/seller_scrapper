@@ -132,6 +132,14 @@ class KreamTab(QWidget):
 
         self.log_edit = QTextEdit()
         self.log_edit.setReadOnly(True)
+        self.log_edit.setStyleSheet("""
+            QTextEdit {
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                padding: 8px;
+                background-color: white;
+            }
+        """)
 
         main_layout.addLayout(permission_layout)
         main_layout.addLayout(date_layout)
