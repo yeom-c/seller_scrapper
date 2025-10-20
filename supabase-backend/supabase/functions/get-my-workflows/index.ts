@@ -25,10 +25,13 @@ Deno.serve(async (req) => {
     }
 
     // 사용자의 ID를 기반으로, 만료되지 않은 권한에 해당하는 워크플로우를 조회합니다.
-    const { data: workflows, error } = await supabase
+    const { data, error } = await supabase
       .from('user_permissions')
       .select(`
+        expires_at,
         permissions (
+          name,
+          type,
           workflows (
             id,
             name,
@@ -44,9 +47,15 @@ Deno.serve(async (req) => {
     }
 
     // 데이터 구조를 클라이언트가 사용하기 쉽게 가공합니다.
-    const workflowList = workflows.map(item => item.permissions.workflows);
+    const responseData = data.map(item => ({
+      permission: {
+        name: item.permissions.name,
+        type: item.permissions.type,
+      },
+      workflow: item.permissions.workflows
+    }));
 
-    return new Response(JSON.stringify(workflowList), {
+    return new Response(JSON.stringify(responseData), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     })

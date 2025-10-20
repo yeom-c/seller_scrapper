@@ -104,7 +104,7 @@ class MainWindow(QMainWindow):
             # 기타 권한용 기본 탭
             tab_widget = QWidget()
             layout = QVBoxLayout(tab_widget)
-            layout.addWidget(QLabel(f"{tab_name} 탭입니다."))
+            layout.addWidget(QLabel("업데이트 예정입니다."))
             tab_widget.permission = permission
             return tab_widget
 
