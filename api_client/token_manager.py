@@ -1,22 +1,26 @@
 import jwt
 import time
 from typing import Dict, List, Optional, Any
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class Permission:
     """개별 권한 정보를 관리하는 클래스."""
     
-    def __init__(self, name: str, exp: int):
+    def __init__(self, name: str, exp: int, payment_type: str, type: str):
         """
         Permission 초기화.
         
         Args:
-            name: 권한 이름 (예: 'kream')
+            name: 권한 이름 (예: '1시간 무료 체험')
             exp: 만료 시간 (Unix timestamp)
+            payment_type: 결제 타입 (예: 'TRIAL', 'PAID')
+            type: 권한 타입 (예: 'KREAM')
         """
         self.name = name
         self.exp = exp
+        self.payment_type = payment_type
+        self.type = type
     
     def is_expired(self) -> bool:
         """권한이 만료되었는지 확인합니다."""
@@ -27,7 +31,9 @@ class Permission:
         return max(0, int(self.exp - time.time()))
     
     def __repr__(self) -> str:
-        return f"Permission(name={self.name}, exp={self.exp}, expired={self.is_expired()})"
+        return (f"Permission(name={self.name}, type={self.type}, "
+                f"payment_type={self.payment_type}, exp={self.exp}, "
+                f"expired={self.is_expired()})")
 
 
 class TokenManager:
@@ -69,12 +75,23 @@ class TokenManager:
             # 권한 정보 파싱 (user_metadata 안에 있음)
             self._permissions = []
             user_metadata = payload.get('user_metadata', {})
-            permissions_data = user_metadata.get('permissions', {})
+            permissions_data = user_metadata.get('permissions', [])
             
-            # permissions는 dict 형태: {"kream": {"exp": 1234567890}}
-            for name, info in permissions_data.items():
-                exp = info.get('exp', 0)
-                self._permissions.append(Permission(name, exp))
+            # permissions 형태: [{'expires_at': '...', 'name': '...', 'payment_type': '...', 'type': '...'}]
+            for perm_data in permissions_data:
+                name = perm_data.get('name')
+                expires_at_str = perm_data.get('expires_at')
+                payment_type = perm_data.get('payment_type')
+                perm_type = perm_data.get('type')
+
+                if name and expires_at_str and payment_type and perm_type:
+                    # ISO 8601 형식의 문자열을 datetime 객체로 변환
+                    dt_obj = datetime.fromisoformat(expires_at_str)
+                    # datetime 객체를 Unix 타임스탬프로 변환
+                    exp_timestamp = int(dt_obj.timestamp())
+                    self._permissions.append(
+                        Permission(name, exp_timestamp, payment_type, perm_type)
+                    )
         
         except Exception as e:
             print(f"토큰 파싱 오류: {e}")

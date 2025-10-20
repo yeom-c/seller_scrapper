@@ -440,7 +440,7 @@ class LoginWindow(QWidget):
             QMessageBox.critical(
                 self,
                 "로그인 오류",
-                f"로그인 중 오류가 발생했습니다:\n{str(e)}"
+                "로그인 중 오류가 발생했습니다."
             )
             
         finally:

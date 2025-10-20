@@ -6,8 +6,8 @@ class APIConfig:
     """API 설정을 관리하는 클래스."""
     
     # Supabase 기본 설정
-    DEFAULT_SUPABASE_URL = "https://ewzhqloswstzhtbgpelv.supabase.co"
-    DEFAULT_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV3emhxbG9zd3N0emh0YmdwZWx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3OTQzMDAsImV4cCI6MjA3NjM3MDMwMH0.uQHeHIcfM7Lh0PT-dAXDO3k1UInr4a6p0R3giCH4Icw"
+    DEFAULT_SUPABASE_URL = "https://poeslenmqbamnxzvyanz.supabase.co"
+    DEFAULT_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvZXNsZW5tcWJhbW54enZ5YW56Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA4Nzk3OTMsImV4cCI6MjA3NjQ1NTc5M30.Dspj3qFIR46kgCkPSkbDFRflqKVz0CdsA6y3Cq2z7WA"
     
     def __init__(self):
         # Supabase 설정
