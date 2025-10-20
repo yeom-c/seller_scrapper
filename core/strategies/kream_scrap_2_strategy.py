@@ -41,6 +41,7 @@ class KreamScrap2Strategy(ScrapingStrategy):
         """
         all_list_items = self.driver.find_elements(By.CSS_SELECTOR, self.step_details['list_item_selector'])
         filtered_items = []
+        max_items = self._get_max_items()  # TRIAL이면 15, 아니면 None
         
         for item in all_list_items:
             date_element = item.find_element(By.CSS_SELECTOR, self.step_details['list_date_selector'])
@@ -48,6 +49,11 @@ class KreamScrap2Strategy(ScrapingStrategy):
             
             if item_date and self._is_date_in_range(item_date, start_date, end_date):
                 filtered_items.append({"element": item, "date": item_date})
+                
+                # TRIAL 권한의 경우 최대 개수 제한
+                if max_items and len(filtered_items) >= max_items:
+                    self.log_handler(f"무료 권한은 최대 {max_items}개까지만 수집 가능합니다.", "red")
+                    break
         
         return filtered_items
 

@@ -9,8 +9,9 @@ class ScrapingStrategy:
     # 상수 정의
     SCROLL_PAUSE_TIME = 2
     DATE_FORMAT = "%y/%m/%d"
+    TRIAL_MAX_ITEMS = 15  # TRIAL 사용자 최대 수집 개수
 
-    def __init__(self, scraper, step_details, date_range):
+    def __init__(self, scraper, step_details, date_range, payment_type=None):
         """전략 클래스 초기화."""
         self.scraper = scraper
         self.driver = scraper.driver
@@ -19,11 +20,20 @@ class ScrapingStrategy:
         self.progress_handler = scraper.progress_handler
         self.step_details = step_details
         self.date_range = date_range
+        self.payment_type = payment_type
         self.collected_data: List[Dict[str, Any]] = []
 
     def execute(self):
         """이 메소드는 모든 하위 전략 클래스에서 반드시 구현해야 합니다."""
         raise NotImplementedError("execute 메소드는 하위 클래스에서 구현해야 합니다.")
+
+    def _is_trial_permission(self) -> bool:
+        """TRIAL permission인지 확인합니다."""
+        return self.payment_type == "TRIAL"
+    
+    def _get_max_items(self) -> Optional[int]:
+        """최대 수집 개수를 반환합니다. TRIAL이면 15개, 아니면 None(무제한)."""
+        return self.TRIAL_MAX_ITEMS if self._is_trial_permission() else None
 
     def _scroll_to_load_items(self, start_date: Optional[date] = None) -> bool:
         """페이지를 스크롤하여 아이템을 로드합니다.

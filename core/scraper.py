@@ -20,10 +20,11 @@ class WorkflowScraper:
     DEFAULT_WAIT_TIMEOUT = 3
     NAVIGATE_WAIT_TIME = 2
     
-    def __init__(self, log_handler: Callable, progress_handler: Callable, step_start_handler: Callable):
+    def __init__(self, log_handler: Callable, progress_handler: Callable, step_start_handler: Callable, payment_type: Optional[str] = None):
         self.log_handler = log_handler
         self.progress_handler = progress_handler
         self.step_start_handler = step_start_handler
+        self.payment_type = payment_type
         self._is_running = True
         self.collected_data = []
         self.current_step_details: Dict[str, Any] = {}
@@ -123,7 +124,7 @@ class WorkflowScraper:
         self.step_start_handler(step_name)
         
         strategy_class = self.strategy_map[action_type]
-        strategy_instance = strategy_class(self, step, self.date_range)
+        strategy_instance = strategy_class(self, step, self.date_range, self.payment_type)
         
         try:
             self.collected_data = strategy_instance.execute()

@@ -11,10 +11,11 @@ class ScraperWorker(QObject):
     progress_updated = Signal(int, int)
     step_started = Signal(str)
 
-    def __init__(self, workflow_data, date_range):
+    def __init__(self, workflow_data, date_range, payment_type=None):
         super().__init__()
         self.workflow_data = workflow_data
         self.date_range = date_range
+        self.payment_type = payment_type
         self.scraper = None
 
     def run(self):
@@ -23,7 +24,8 @@ class ScraperWorker(QObject):
             self.scraper = WorkflowScraper(
                 log_handler=self.log_message.emit,
                 progress_handler=self.progress_updated.emit,
-                step_start_handler=self.step_started.emit
+                step_start_handler=self.step_started.emit,
+                payment_type=self.payment_type
             )
             self.scraper.run_workflow(self.workflow_data, **self.date_range)
         except Exception as e:

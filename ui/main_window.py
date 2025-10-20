@@ -100,6 +100,7 @@ class MainWindow(QMainWindow):
             tab_widget.stop_button.clicked.connect(self.stop_scraping)
             tab_widget.folder_button.clicked.connect(self.open_current_tab_folder)
             tab_widget.permission_type = permission_type
+            tab_widget.permission = permission_obj  # permission 객체 저장
             return tab_widget
         else:
             # 기타 권한용 기본 탭
@@ -108,6 +109,7 @@ class MainWindow(QMainWindow):
             layout.addWidget(QLabel("업데이트 예정입니다."))
             # 탭 위젯에 권한 '타입'을 저장
             tab_widget.permission_type = permission_type
+            tab_widget.permission = permission_obj  # permission 객체 저장
             return tab_widget
 
     def _setup_fallback_ui(self) -> None:
@@ -184,8 +186,12 @@ class MainWindow(QMainWindow):
 
     def _create_and_start_worker(self, workflow_data: Dict, date_range: Dict, active_tab: QWidget) -> None:
         """워커 스레드를 생성하고 시작합니다."""
+        # 현재 탭의 permission 정보 가져오기
+        permission = getattr(active_tab, 'permission', None)
+        payment_type = permission.payment_type if permission else None
+        
         self.thread = QThread()
-        self.worker = ScraperWorker(workflow_data, date_range)
+        self.worker = ScraperWorker(workflow_data, date_range, payment_type)
         self.worker.moveToThread(self.thread)
 
         # 시그널 연결
