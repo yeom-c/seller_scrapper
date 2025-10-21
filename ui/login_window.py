@@ -1,4 +1,4 @@
-from PySide6.QtCore import Signal, Qt, QTimer
+from PySide6.QtCore import Signal, Qt, QTimer, QSettings
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
     QLineEdit, QPushButton, QMessageBox, QApplication, QStackedWidget
@@ -15,7 +15,9 @@ class LoginWindow(QWidget):
         super().__init__()
         self.setWindowTitle("판매자 자동화")
         self.setFixedSize(400, 500)
+        self.settings = QSettings("SellerScraper", "LoginInfo")
         self._setup_ui()
+        self._load_saved_email()
         self._center_on_screen()
 
     def _setup_ui(self):
@@ -309,6 +311,19 @@ class LoginWindow(QWidget):
         window_geometry.moveCenter(center_point)
         self.move(window_geometry.topLeft())
     
+    def _load_saved_email(self):
+        """저장된 이메일 주소를 불러옵니다."""
+        saved_email = self.settings.value("last_email", "")
+        if saved_email:
+            self.email_input.setText(saved_email)
+            self.password_input.setFocus()  # 이메일이 있으면 비밀번호로 포커스 이동
+        else:
+            self.email_input.setFocus()
+    
+    def _save_email(self, email: str):
+        """이메일 주소를 저장합니다."""
+        self.settings.setValue("last_email", email)
+    
     def _show_register_page(self):
         """회원가입 페이지로 전환합니다."""
         self.setWindowTitle("회원가입")
@@ -426,6 +441,8 @@ class LoginWindow(QWidget):
             response = auth.login(email=email, password=password)
             
             if response.get('success'):
+                # 로그인 성공 시 이메일 저장
+                self._save_email(email)
                 # 로그인 성공 시그널 발생 (워크플로우는 MainWindow에서 로드)
                 self.login_successful.emit()
                 self.close()
