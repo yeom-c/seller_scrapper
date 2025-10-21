@@ -24,7 +24,7 @@ class PricingTab(QWidget):
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         title_label.setStyleSheet("""
             QLabel {
-                font-size: 24px;
+                font-size: 26px;
                 font-weight: 600;
                 color: #1a1a1a;
             }
@@ -33,11 +33,11 @@ class PricingTab(QWidget):
         main_layout.addWidget(title_label)
         
         # === 서브 타이틀: 기능 요청 안내 ===
-        subtitle_label = QLabel("언제든 필요한 기능은 요청해주세요")
+        subtitle_label = QLabel("언제든 필요한 기능을 요청해주세요\n성심껏 한줄 한줄 코딩하겠습니다!\n⌨️⌨️⌨️⌨️⌨️⌨️⌨️⌨️⌨️⌨️")
         subtitle_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         subtitle_label.setStyleSheet("""
             QLabel {
-                font-size: 15px;
+                font-size: 16px;
                 color: #666;
                 margin-top: 5px;
             }
