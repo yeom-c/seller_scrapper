@@ -156,9 +156,11 @@ class WorkflowScraper:
             self.log_handler("경고: output_filename이 설정되지 않았습니다.", "orange")
             return
         
-        # 규칙 가져오기 (두 가지 키 지원)
-        rules = (self.current_step_details.get('detail_page_rules') or 
-                self.current_step_details.get('detail_rules', {}))
+        # 규칙 가져오기
+        rules = self.current_step_details.get('detail_page_rules')
+        
+        # 컬럼 순서 가져오기
+        column_order = self.current_step_details.get('column_order')
         
         start_date = self.date_range.get('start_date')
         end_date = self.date_range.get('end_date')
@@ -170,8 +172,8 @@ class WorkflowScraper:
         column_mappings = {key: rule.get('column_name', key) for key, rule in rules.items()}
         data_to_save = [{k: v for k, v in item.items() if k != '_date'} for item in self.collected_data]
         
-        # CSV 저장
-        save_to_csv(data_to_save, filename, self.site_name, column_mappings, self.log_handler)
+        # CSV 저장 (column_order 전달)
+        save_to_csv(data_to_save, filename, self.site_name, column_mappings, column_order, self.log_handler)
         self.collected_data = []
 
     def _generate_filename(self, base_filename: str, start_date: Optional[date], end_date: Optional[date]) -> str:

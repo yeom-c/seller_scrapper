@@ -67,7 +67,7 @@ class KreamScrap2Strategy(ScrapingStrategy):
         """
         total_items = len(filtered_items)
         self.progress_handler(0, total_items)
-        rules = self.step_details.get('detail_rules', {})
+        rules = self.step_details.get('detail_page_rules', {})
 
         for i, item_info in enumerate(filtered_items):
             if not self.scraper._is_running:
