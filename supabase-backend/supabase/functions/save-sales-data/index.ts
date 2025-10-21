@@ -88,7 +88,7 @@ Deno.serve(async (req) => {
     const { data, error } = await supabase
       .from('sales')
       .upsert(salesWithUserId, {
-        onConflict: 'user_id,platform_name,order_number',
+        onConflict: 'platform_name,order_number',
         ignoreDuplicates: true, // 중복 시 무시 (업데이트 안 함)
       })
       .select('id') // id만 선택하여 카운트용으로만 사용
