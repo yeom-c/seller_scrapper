@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (
 )
 from scraping_worker import ScraperWorker
 from .tabs.kream_tab import KreamTab
+from .tabs.pricing_tab import PricingTab
 from utils.system_handler import open_output_folder
 from api_client import auth, workflow
 from api_client.token_manager import token_manager, Permission
@@ -20,8 +21,8 @@ class MainWindow(QMainWindow):
     
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("판매자 수집기")
-        self.resize(1200, 600)
+        self.setWindowTitle("판매자 자동화")
+        self.resize(1000, 600)
         self.thread: Optional[QThread] = None
         self.worker: Optional[ScraperWorker] = None
         self._is_closing = False
@@ -127,214 +128,8 @@ class MainWindow(QMainWindow):
 
     def _add_pricing_tab(self) -> None:
         """이용권 탭을 추가합니다."""
-        # 이용권 탭 생성
-        pricing_tab = QWidget()
-        pricing_tab.setStyleSheet("""
-            QWidget {
-                border-radius: 8px;
-                background-color: #fafafa;
-            }
-        """)
-        
-        main_layout = QVBoxLayout(pricing_tab)
-        main_layout.setContentsMargins(10, 10, 10, 10)
-        main_layout.setSpacing(20)
-        
-        # === 상단: 타이틀 ===
-        title_label = QLabel("지금 시작하고 더 많은 판매 데이터를 확보하세요")
-        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        title_label.setStyleSheet("""
-            QLabel {
-                font-size: 24px;
-                font-weight: 600;
-                color: #1a1a1a;
-            }
-        """)
-        
-        main_layout.addWidget(title_label)
-        
-        # === 하단: 가격 플랜 섹션 ===
-        # 중앙 정렬을 위한 컨테이너
-        plans_container = QWidget()
-        plans_container.setStyleSheet("background-color: transparent;")
-        plans_container_layout = QHBoxLayout(plans_container)
-        plans_container_layout.setContentsMargins(0, 0, 0, 0)
-        plans_container_layout.addStretch()
-        
-        plans_widget = QWidget()
-        plans_widget.setStyleSheet("background-color: transparent;")
-        plans_widget.setMaximumWidth(1200)  # 최대 너비 제한 증가
-        plans_layout = QHBoxLayout(plans_widget)
-        plans_layout.setSpacing(20)
-        
-        # 플랜 데이터
-        plans = [
-            {
-                "name": "체험판",
-                "price": "무료",
-                "period": "1시간",
-                "features": [
-                    "최대 15개 수집",
-                    "KREAM 판매내역"
-                ]
-            },
-            {
-                "name": "하루",
-                "price": "₩1,000",
-                "period": "1일",
-                "features": [
-                    "무제한 수집",
-                    "특정 기능 1개 이용"
-                ]
-            },
-            {
-                "name": "한달",
-                "price": "₩9,900",
-                "period": "30일",
-                "features": [
-                    "무제한 수집",
-                    "모든 기능 이용",
-                    "추가 기능 업데이트"
-                ]
-            },
-            {
-                "name": "평생",
-                "price": "₩19,900",
-                "period": "100년",
-                "features": [
-                    "무제한 수집",
-                    "모든 기능 이용",
-                    "추가 기능 업데이트"
-                ]
-            }
-        ]
-        
-        for plan in plans:
-            plan_card = self._create_plan_card(plan)
-            plans_layout.addWidget(plan_card)
-        
-        plans_container_layout.addWidget(plans_widget)
-        plans_container_layout.addStretch()
-        
-        main_layout.addWidget(plans_container)
-        main_layout.addStretch()
-        
-        # 이용권 탭을 마지막에 추가
+        pricing_tab = PricingTab()
         self.tabs.addTab(pricing_tab, "요금제")
-    
-    def _create_plan_card(self, plan: dict) -> QWidget:
-        """개별 플랜 카드를 생성합니다."""
-        card = QWidget()
-        card.setFixedWidth(260)  # 고정 너비 설정
-        card.setFixedHeight(280)  # 고정 높이 설정
-        card_layout = QVBoxLayout(card)
-        card_layout.setSpacing(0)
-        card_layout.setContentsMargins(0, 0, 0, 0)
-        
-        # 카드 컨테이너
-        container = QWidget()
-        container.setStyleSheet("background-color: transparent; border: none;")
-        container_layout = QVBoxLayout(container)
-        container_layout.setContentsMargins(24, 24, 24, 24)
-        container_layout.setSpacing(16)
-        
-        # 플랜 이름
-        name_label = QLabel(plan["name"])
-        name_label.setStyleSheet("""
-            QLabel {
-                font-size: 16px;
-                font-weight: 600;
-                color: #1a1a1a;
-            }
-        """)
-        container_layout.addWidget(name_label)
-        
-        # 가격
-        price_layout = QHBoxLayout()
-        price_layout.setContentsMargins(0, 0, 0, 0)
-        price_layout.setSpacing(4)
-        
-        price_label = QLabel(plan["price"])
-        price_label.setStyleSheet("""
-            QLabel {
-                font-size: 28px;
-                font-weight: 700;
-                color: #0f172a;
-            }
-        """)
-        
-        period_label = QLabel(f"/ {plan['period']}")
-        period_label.setStyleSheet("""
-            QLabel {
-                font-size: 14px;
-                color: #64748b;
-                padding-top: 8px;
-            }
-        """)
-        
-        price_layout.addWidget(price_label)
-        price_layout.addWidget(period_label)
-        price_layout.addStretch()
-        
-        container_layout.addLayout(price_layout)
-        container_layout.addSpacing(8)
-        
-        # 구분선
-        separator = QWidget()
-        separator.setFixedHeight(1)
-        separator.setStyleSheet("background-color: #e2e8f0;")
-        container_layout.addWidget(separator)
-        container_layout.addSpacing(8)
-        
-        # 기능 목록
-        for feature in plan["features"]:
-            feature_layout = QHBoxLayout()
-            feature_layout.setContentsMargins(0, 0, 0, 0)
-            feature_layout.setSpacing(8)
-            
-            # 체크마크
-            check_label = QLabel("✓")
-            check_label.setStyleSheet("""
-                QLabel {
-                    font-size: 14px;
-                    color: #10b981;
-                    font-weight: bold;
-                }
-            """)
-            check_label.setFixedWidth(16)
-            
-            # 기능 텍스트
-            feature_label = QLabel(feature)
-            feature_label.setStyleSheet("""
-                QLabel {
-                    font-size: 13px;
-                    color: #475569;
-                }
-            """)
-            feature_label.setWordWrap(True)
-            
-            feature_layout.addWidget(check_label)
-            feature_layout.addWidget(feature_label, 1)
-            
-            container_layout.addLayout(feature_layout)
-        
-        container_layout.addStretch()
-        
-        card_layout.addWidget(container)
-        
-        # 모든 카드 동일한 스타일
-        card.setStyleSheet("""
-            QWidget {
-                background-color: white;
-                border: 1px solid #e2e8f0;
-                border-radius: 12px;
-            }
-            QWidget:hover {
-                border: 1px solid #cbd5e1;
-            }
-        """)
-        
-        return card
 
     def open_current_tab_folder(self) -> None:
         """현재 활성화된 탭에 해당하는 output 하위 폴더를 엽니다."""

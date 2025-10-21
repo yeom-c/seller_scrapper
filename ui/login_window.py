@@ -13,7 +13,7 @@ class LoginWindow(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("판매자 수집기")
+        self.setWindowTitle("판매자 자동화")
         self.setFixedSize(400, 500)
         self._setup_ui()
         self._center_on_screen()
@@ -36,6 +36,9 @@ class LoginWindow(QWidget):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(self.stacked_widget)
         self.setLayout(main_layout)
+        
+        # 메인 윈도우 배경색 설정
+        self.setStyleSheet("background-color: white;")
     
     def _create_login_page(self):
         """로그인 페이지 생성."""
