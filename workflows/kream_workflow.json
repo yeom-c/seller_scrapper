@@ -91,7 +91,7 @@
           "mapping": {
             "platform_name": {"type": "fixed", "value": "KREAM"},
             "order_number": {"type": "field", "value": "order_number"},
-            "sale_date": {"type": "field", "value": "_date"},
+            "sale_date": {"type": "field", "value": "transaction_date"},
             "product_name": {"type": "field", "value": "product_name_eng"},
             "product_code": {"type": "field", "value": "product_model"},
             "product_size": {"type": "field", "value": "size"},
@@ -178,7 +178,7 @@
           "mapping": {
             "platform_name": {"type": "fixed", "value": "KREAM"},
             "order_number": {"type": "field", "value": "order_number"},
-            "sale_date": {"type": "field", "value": "_date"},
+            "sale_date": {"type": "field", "value": "transaction_date"},
             "product_name": {"type": "field", "value": "product_name_eng"},
             "product_code": {"type": "field", "value": "product_model"},
             "product_size": {"type": "field", "value": "size"},

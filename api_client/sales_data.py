@@ -87,8 +87,7 @@ class SalesData:
             return {
                 "success": True,
                 "message": data.get('message', 'Sales data saved successfully'),
-                "inserted": data.get('inserted', 0),
-                "data": data.get('data', [])
+                "inserted": data.get('inserted', 0)
             }
                 
         except Exception as e:

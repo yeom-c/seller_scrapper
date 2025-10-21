@@ -84,14 +84,14 @@ Deno.serve(async (req) => {
     }))
 
     // 판매 데이터를 데이터베이스에 삽입합니다.
-    // upsert를 사용하여 중복된 데이터는 업데이트하고, 새로운 데이터는 삽입합니다.
+    // upsert를 사용하여 중복된 데이터는 무시하고, 새로운 데이터만 삽입합니다.
     const { data, error } = await supabase
       .from('sales')
       .upsert(salesWithUserId, {
         onConflict: 'user_id,platform_name,order_number',
-        ignoreDuplicates: false, // 중복 시 업데이트
+        ignoreDuplicates: true, // 중복 시 무시 (업데이트 안 함)
       })
-      .select()
+      .select('id') // id만 선택하여 카운트용으로만 사용
 
     if (error) {
       console.error('Error inserting sales data:', error)
@@ -111,7 +111,6 @@ Deno.serve(async (req) => {
       JSON.stringify({
         message: 'Sales data saved successfully',
         inserted: data?.length || 0,
-        data: data,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -1,6 +1,6 @@
 """수집된 데이터를 판매 데이터 형식으로 변환하는 변환기"""
 from typing import List, Dict, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 
 class SalesDataConverter:
@@ -193,38 +193,59 @@ class SalesDataConverter:
     
     @staticmethod
     def _parse_date(date_value: Any) -> Optional[datetime]:
-        """다양한 날짜 형식을 datetime으로 변환"""
-        if isinstance(date_value, datetime):
-            return date_value
+        """다양한 날짜 형식을 datetime으로 변환 (KST → UTC)"""
+        # KST는 UTC+9
+        KST = timezone(timedelta(hours=9))
         
-        # date 객체를 datetime으로 변환
+        if isinstance(date_value, datetime):
+            # 이미 datetime이면 KST로 간주하고 UTC로 변환
+            if date_value.tzinfo is None:
+                date_value = date_value.replace(tzinfo=KST)
+            return date_value.astimezone(timezone.utc)
+        
+        # date 객체를 datetime으로 변환 (00:00:00 KST)
         if hasattr(date_value, 'year') and hasattr(date_value, 'month') and hasattr(date_value, 'day'):
             try:
-                return datetime(date_value.year, date_value.month, date_value.day)
+                dt = datetime(date_value.year, date_value.month, date_value.day, tzinfo=KST)
+                return dt.astimezone(timezone.utc)
             except Exception:
                 pass
         
         if isinstance(date_value, str):
-            # "2025.01.21" 형식
-            if '.' in date_value:
+            dt = None
+            
+            # "25/10/11 01:32" 형식 (YY/MM/DD HH:MM)
+            if '/' in date_value and ' ' in date_value:
                 try:
-                    return datetime.strptime(date_value, '%Y.%m.%d')
+                    dt = datetime.strptime(date_value, '%y/%m/%d %H:%M')
+                except ValueError:
+                    pass
+            
+            # "2025.01.21" 형식
+            elif '.' in date_value:
+                try:
+                    dt = datetime.strptime(date_value, '%Y.%m.%d')
                 except ValueError:
                     pass
             
             # "2025-01-21" 형식
-            if '-' in date_value:
+            elif '-' in date_value:
                 try:
-                    return datetime.strptime(date_value, '%Y-%m-%d')
+                    dt = datetime.strptime(date_value, '%Y-%m-%d')
                 except ValueError:
                     pass
             
             # "25/10/20" 형식 (YY/MM/DD)
-            if '/' in date_value and len(date_value.split('/')) == 3:
+            elif '/' in date_value and len(date_value.split('/')) == 3:
                 try:
-                    return datetime.strptime(date_value, '%y/%m/%d')
+                    dt = datetime.strptime(date_value, '%y/%m/%d')
                 except ValueError:
                     pass
+            
+            # 파싱된 datetime을 KST로 간주하고 UTC로 변환
+            if dt:
+                dt = dt.replace(tzinfo=KST)
+                return dt.astimezone(timezone.utc)
         
         return None
     

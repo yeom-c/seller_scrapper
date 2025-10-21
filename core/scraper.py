@@ -201,20 +201,18 @@ class WorkflowScraper:
             if not sales_data_list:
                 return
             
-            # Edge Function 호출하여 저장
-            result = sales_data.save_sales_data(sales_data_list)
+            # 배치 처리
+            BATCH_SIZE = 1000
             
-            if result.get('success'):
-                return
-            else:
-                error_msg = result.get('error', 'Unknown error')
-                print(f"⚠️ 데이터베이스 저장 실패: {error_msg}")
-                if result.get('details'):
-                    print(f"   상세: {result.get('details')}")
+            for i in range(0, len(sales_data_list), BATCH_SIZE):
+                batch = sales_data_list[i:i + BATCH_SIZE]
+                
+                # Edge Function 호출하여 저장
+                sales_data.save_sales_data(batch)
                     
         except Exception as e:
-            print(f"⚠️ 데이터베이스 저장 중 오류: {e}")
             # 데이터베이스 저장 실패해도 CSV 저장은 계속 진행
+            pass
 
     def _generate_filename(self, base_filename: str, start_date: Optional[date], end_date: Optional[date]) -> str:
         """파일명을 생성합니다."""
