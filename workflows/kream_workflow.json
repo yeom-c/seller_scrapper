@@ -16,21 +16,8 @@
       "step_name": "일반 판매 정산 내역 수집",
       "action_type": "kream_scrap_1",
       "target_url": "https://kream.co.kr/my/selling?tab=finished&status=payout_completed",
-      "output_filename": "크림_일반판매",
       "list_item_selector": "a.product_list_info_action",
       "list_date_selector": ".caption_item p",
-      "column_order": [
-        "order_number",
-        "product_name_eng",
-        "product_name_kor",
-        "product_model",
-        "size",
-        "transaction_date",
-        "payout_date",
-        "instant_sell_price",
-        "commission_fee",
-        "payout_amount"
-      ],
       "detail_page_rules": {
         "order_number": {
           "column_name": "주문번호",
@@ -82,29 +69,48 @@
           "label": "정산금액",
           "type": "find_by_label"
         }
+      },
+      "output_rules": {
+        "csv": {
+          "filename": "크림_일반판매",
+          "column_order": [
+            "order_number",
+            "product_name_eng",
+            "product_name_kor",
+            "product_model",
+            "size",
+            "transaction_date",
+            "payout_date",
+            "instant_sell_price",
+            "commission_fee",
+            "payout_amount"
+          ]
+        },
+        "db": {
+          "enabled": true,
+          "mapping": {
+            "platform_name": {"type": "fixed", "value": "KREAM"},
+            "order_number": {"type": "field", "value": "order_number"},
+            "sale_date": {"type": "field", "value": "_date"},
+            "product_name": {"type": "field", "value": "product_name_eng"},
+            "product_code": {"type": "field", "value": "product_model"},
+            "product_size": {"type": "field", "value": "size"},
+            "product_color": {"type": "fixed", "value": null},
+            "sale_price": {"type": "field", "value": "instant_sell_price"},
+            "quantity": {"type": "fixed", "value": 1}
+          }
+        }
       }
     },
     {
       "step_name": "보관 판매 정산 내역 수집",
       "action_type": "kream_scrap_2",
       "target_url": "https://kream.co.kr/my/inventory?tab=finished&status=payout_completed",
-      "output_filename": "크림_보관판매",
       "list_item_selector": ".inventory_item",
       "list_date_selector": ".tab_item.date .value",
       "detail_button_selector": ".btn.detail",
       "drawer_selector": ".drawer__content",
       "drawer_close_button_selector": ".btn_layer_close",
-      "column_order": [
-        "order_number",
-        "product_name_eng",
-        "product_model",
-        "size",
-        "transaction_date",
-        "payout_date",
-        "instant_sell_price",
-        "commission_fee",
-        "payout_amount"
-      ],
       "detail_page_rules": {
         "order_number": {
           "column_name": "주문번호",
@@ -150,6 +156,36 @@
           "column_name": "정산금액",
           "label": "정산금액",
           "type": "find_by_label_v2"
+        }
+      },
+      "output_rules": {
+        "csv": {
+          "filename": "크림_보관판매",
+          "column_order": [
+            "order_number",
+            "product_name_eng",
+            "product_model",
+            "size",
+            "transaction_date",
+            "payout_date",
+            "instant_sell_price",
+            "commission_fee",
+            "payout_amount"
+          ]
+        },
+        "db": {
+          "enabled": true,
+          "mapping": {
+            "platform_name": {"type": "fixed", "value": "KREAM"},
+            "order_number": {"type": "field", "value": "order_number"},
+            "sale_date": {"type": "field", "value": "_date"},
+            "product_name": {"type": "field", "value": "product_name_eng"},
+            "product_code": {"type": "field", "value": "product_model"},
+            "product_size": {"type": "field", "value": "size"},
+            "product_color": {"type": "fixed", "value": null},
+            "sale_price": {"type": "field", "value": "instant_sell_price"},
+            "quantity": {"type": "fixed", "value": 1}
+          }
         }
       }
     }

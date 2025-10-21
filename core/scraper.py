@@ -10,7 +10,9 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from .strategies.kream_scrap_1_strategy import KreamScrap1Strategy
 from .strategies.kream_scrap_2_strategy import KreamScrap2Strategy
+from .sales_data_converter import SalesDataConverter
 from utils.file_handler import save_to_csv
+from api_client.sales_data import sales_data
 
 
 class WorkflowScraper:
@@ -147,20 +149,24 @@ class WorkflowScraper:
             self.log_handler(f"데이터 저장 중 오류: {save_error}", "red")
 
     def save_collected_data(self) -> None:
-        """수집된 데이터를 CSV 파일로 저장하는 헬퍼 메소드."""
+        """수집된 데이터를 데이터베이스와 CSV 파일로 저장하는 헬퍼 메소드."""
         if not self.collected_data:
             return
             
-        base_filename = self.current_step_details.get('output_filename')
+        base_filename = self.current_step_details.get('output_rules', {}).get('csv', {}).get('filename')
         if not base_filename:
-            self.log_handler("경고: output_filename이 설정되지 않았습니다.", "orange")
+            self.log_handler("경고: filename 설정되지 않았습니다.", "orange")
             return
         
+        # 1. 데이터베이스에 저장
+        self._save_to_database()
+        
+        # 2. CSV 파일로 저장
         # 규칙 가져오기
         rules = self.current_step_details.get('detail_page_rules')
         
         # 컬럼 순서 가져오기
-        column_order = self.current_step_details.get('column_order')
+        column_order = self.current_step_details.get('output_rules', {}).get('csv', {}).get('column_order')
         
         start_date = self.date_range.get('start_date')
         end_date = self.date_range.get('end_date')
@@ -175,6 +181,40 @@ class WorkflowScraper:
         # CSV 저장 (column_order 전달)
         save_to_csv(data_to_save, filename, self.site_name, column_mappings, column_order, self.log_handler)
         self.collected_data = []
+    
+    def _save_to_database(self) -> None:
+        """수집된 데이터를 데이터베이스에 저장합니다."""
+        try:
+            # DB 저장 설정 확인
+            db_rules = self.current_step_details.get('output_rules', {}).get('db', {})
+            
+            if not db_rules.get('enabled'):
+                return
+            
+            mapping = db_rules.get('mapping')
+            if not mapping:
+                return
+            
+            # 매핑 룰을 사용하여 데이터 변환
+            sales_data_list = SalesDataConverter.convert_with_mapping(self.collected_data, mapping)
+            
+            if not sales_data_list:
+                return
+            
+            # Edge Function 호출하여 저장
+            result = sales_data.save_sales_data(sales_data_list)
+            
+            if result.get('success'):
+                return
+            else:
+                error_msg = result.get('error', 'Unknown error')
+                print(f"⚠️ 데이터베이스 저장 실패: {error_msg}")
+                if result.get('details'):
+                    print(f"   상세: {result.get('details')}")
+                    
+        except Exception as e:
+            print(f"⚠️ 데이터베이스 저장 중 오류: {e}")
+            # 데이터베이스 저장 실패해도 CSV 저장은 계속 진행
 
     def _generate_filename(self, base_filename: str, start_date: Optional[date], end_date: Optional[date]) -> str:
         """파일명을 생성합니다."""
