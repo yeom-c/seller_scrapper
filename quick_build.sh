@@ -23,16 +23,16 @@ pyinstaller build_config.spec --clean
 echo ""
 echo "======================================"
 if [ "$(uname)" == "Darwin" ]; then
-    if [ -d "dist/SellerScrapper.app" ]; then
+    if [ -d "dist/SellerAutomation.app" ]; then
         echo "✅ 빌드 성공!"
-        echo "실행: open dist/SellerScrapper.app"
+        echo "실행: open dist/SellerAutomation.app"
     else
         echo "❌ 빌드 실패"
     fi
 else
-    if [ -f "dist/SellerScrapper/SellerScrapper" ]; then
+    if [ -f "dist/SellerAutomation/SellerAutomation" ]; then
         echo "✅ 빌드 성공!"
-        echo "실행: cd dist/SellerScrapper && ./SellerScrapper"
+        echo "실행: cd dist/SellerAutomation && ./SellerAutomation"
     else
         echo "❌ 빌드 실패"
     fi

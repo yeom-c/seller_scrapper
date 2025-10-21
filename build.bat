@@ -40,14 +40,14 @@ echo ======================================
 echo 빌드 완료!
 echo ======================================
 
-if exist "dist\SellerScrapper\SellerScrapper.exe" (
-    echo ✅ Windows 실행 파일 생성 완료: dist\SellerScrapper\
+if exist "dist\SellerAutomation\SellerAutomation.exe" (
+    echo ✅ Windows 실행 파일 생성 완료: dist\SellerAutomation\
     echo.
     echo 실행 방법:
-    echo   cd dist\SellerScrapper
-    echo   SellerScrapper.exe
+    echo   cd dist\SellerAutomation
+    echo   SellerAutomation.exe
     echo.
-    echo 또는 dist\SellerScrapper 폴더를 통째로 복사하여 사용할 수 있습니다.
+    echo 또는 dist\SellerAutomation 폴더를 통째로 복사하여 사용할 수 있습니다.
 ) else (
     echo ❌ 빌드 실패! 에러 로그를 확인하세요.
 )

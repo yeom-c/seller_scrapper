@@ -40,11 +40,11 @@
 4. 빌드 완료 후 실행
    ```bash
    # macOS
-   open dist/SellerScrapper.app
+   open dist/SellerAutomation.app
    
    # Linux
-   cd dist/SellerScrapper
-   ./SellerScrapper
+   cd dist/SellerAutomation
+   ./SellerAutomation
    ```
 
 ### Windows
@@ -61,8 +61,8 @@
 
 3. 빌드 완료 후 실행
    ```cmd
-   cd dist\SellerScrapper
-   SellerScrapper.exe
+   cd dist\SellerAutomation
+   SellerAutomation.exe
    ```
 
 ## 📦 수동 빌드 (고급)
@@ -92,15 +92,15 @@ pyinstaller build_config.spec
 ### macOS
 ```
 dist/
-└── SellerScrapper.app/          # 더블클릭으로 실행 가능한 앱 번들
+└── SellerAutomation.app/          # 더블클릭으로 실행 가능한 앱 번들
 ```
 
 ### Windows / Linux
 ```
 dist/
-└── SellerScrapper/
-    ├── SellerScrapper.exe       # Windows 실행 파일
-    ├── SellerScrapper           # Linux 실행 파일
+└── SellerAutomation/
+    ├── SellerAutomation.exe       # Windows 실행 파일
+    ├── SellerAutomation           # Linux 실행 파일
     ├── workflows/               # 워크플로우 설정 파일들
     └── [기타 의존성 파일들]
 ```
@@ -108,22 +108,22 @@ dist/
 ## 🎯 배포 방법
 
 ### macOS
-1. `dist/SellerScrapper.app`을 압축
+1. `dist/SellerAutomation.app`을 압축
 2. 사용자에게 전달
 3. 사용자는 압축 해제 후 앱을 Applications 폴더로 이동
 
 ### Windows
-1. `dist/SellerScrapper` 폴더 전체를 압축
+1. `dist/SellerAutomation` 폴더 전체를 압축
 2. 사용자에게 전달
-3. 사용자는 원하는 위치에 압축 해제 후 `SellerScrapper.exe` 실행
+3. 사용자는 원하는 위치에 압축 해제 후 `SellerAutomation.exe` 실행
 
 ### Linux
-1. `dist/SellerScrapper` 폴더 전체를 압축
+1. `dist/SellerAutomation` 폴더 전체를 압축
 2. 사용자에게 전달
 3. 사용자는 압축 해제 후 실행 권한 부여:
    ```bash
-   chmod +x SellerScrapper
-   ./SellerScrapper
+   chmod +x SellerAutomation
+   ./SellerAutomation
    ```
 
 ## ⚙️ 빌드 설정 커스터마이징
@@ -156,7 +156,7 @@ exe = EXE(
     a.datas,         # 추가
     [],
     exclude_binaries=False,  # True에서 False로 변경
-    name='SellerScrapper',
+    name='SellerAutomation',
     # ... 나머지 옵션
 )
 
@@ -176,7 +176,7 @@ exe = EXE(
 ### macOS에서 "앱이 손상되었습니다" 메시지
 ```bash
 # 보안 속성 제거
-xattr -cr dist/SellerScrapper.app
+xattr -cr dist/SellerAutomation.app
 ```
 
 ### Windows Defender 경고

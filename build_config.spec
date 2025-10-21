@@ -66,7 +66,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='SellerScrapper',
+    name='SellerAutomation',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -88,16 +88,16 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='SellerScrapper',
+    name='SellerAutomation',
 )
 
 # macOS 전용: .app 번들 생성
 if sys.platform == 'darwin':
     app = BUNDLE(
         coll,
-        name='SellerScrapper.app',
+        name='SellerAutomation.app',
         icon=str(root_dir / 'icon.icns'),  # macOS용 아이콘
-        bundle_identifier='com.sellerscrapper.app',
+        bundle_identifier='com.SellerAutomation.app',
         info_plist={
             'NSHighResolutionCapable': 'True',
             'LSBackgroundOnly': 'False',

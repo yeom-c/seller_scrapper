@@ -41,20 +41,20 @@ echo "======================================"
 
 if [ "$(uname)" == "Darwin" ]; then
     # macOS
-    if [ -d "dist/SellerScrapper.app" ]; then
-        echo "✅ macOS 앱 번들 생성 완료: dist/SellerScrapper.app"
+    if [ -d "dist/SellerAutomation.app" ]; then
+        echo "✅ macOS 앱 번들 생성 완료: dist/SellerAutomation.app"
         echo ""
         echo "실행 방법:"
-        echo "  open dist/SellerScrapper.app"
+        echo "  open dist/SellerAutomation.app"
     fi
 else
     # Linux
-    if [ -f "dist/SellerScrapper/SellerScrapper" ]; then
-        echo "✅ Linux 실행 파일 생성 완료: dist/SellerScrapper/"
+    if [ -f "dist/SellerAutomation/SellerAutomation" ]; then
+        echo "✅ Linux 실행 파일 생성 완료: dist/SellerAutomation/"
         echo ""
         echo "실행 방법:"
-        echo "  cd dist/SellerScrapper"
-        echo "  ./SellerScrapper"
+        echo "  cd dist/SellerAutomation"
+        echo "  ./SellerAutomation"
     fi
 fi
 
