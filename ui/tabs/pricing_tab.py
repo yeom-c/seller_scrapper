@@ -33,7 +33,7 @@ class PricingTab(QWidget):
         main_layout.addWidget(title_label)
         
         # === 서브 타이틀: 기능 요청 안내 ===
-        subtitle_label = QLabel("언제든 필요한 기능을 요청해주세요\n성심껏 한줄 한줄 코딩하겠습니다!\n⌨️⌨️⌨️⌨️⌨️⌨️⌨️⌨️⌨️⌨️")
+        subtitle_label = QLabel("언제든 필요한 기능을 요청해주세요\n성심껏 한줄 한줄 코딩하겠습니다!\n⌨️⌨️⌨️")
         subtitle_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         subtitle_label.setStyleSheet("""
             QLabel {
