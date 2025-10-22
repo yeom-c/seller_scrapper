@@ -68,53 +68,64 @@ class KreamTab(QWidget):
 
         self.start_button.setStyleSheet("""
             QPushButton {
-                background-color: #4A90E2;
-                color: white;
-                border-radius: 5px;
+                background-color: #3A86FF;
+                color: #FFFFFF;
                 font-weight: bold;
+                border-radius: 5px;
             }
             QPushButton:hover {
-                background-color: #357ABD;
+                background-color: #5093FF;
             }
             QPushButton:pressed {
-                background-color: #2868A8;
+                background-color: #3174DE;
             }
             QPushButton:disabled {
-                background-color: #BDBDBD;
+                background-color: #EBF0F5;
+                color: #8A94A6;
             }
         """)
         self.stop_button.setStyleSheet("""
             QPushButton {
-                background-color: #EF5350;
-                color: white;
-                border-radius: 5px;
+                background-color: transparent;
+                color: #DC3545;
                 font-weight: bold;
+                border: 1px solid #DC3545;
+                border-radius: 5px;
             }
             QPushButton:hover {
-                background-color: #E53935;
+                background-color: #FFF5F5;
+                color: #DC3545;
+                border: 1px solid #DC3545;
             }
             QPushButton:pressed {
-                background-color: #C62828;
+                background-color: #FEE5E5;
+                color: #DC3545;
+                border: 1px solid #DC3545;
             }
             QPushButton:disabled {
-                background-color: #BDBDBD;
+                background-color: transparent;
+                color: #8A94A6;
+                border: 1px solid #EBF0F5;
             }
         """)
         self.folder_button.setStyleSheet("""
             QPushButton {
-                background-color: #757575;
-                color: white;
+                background-color: #8A94A6;
+                color: #FFFFFF;
                 border-radius: 5px;
                 font-weight: bold;
             }
             QPushButton:hover {
-                background-color: #616161;
+                background-color: #757F93;
+                color: #FFFFFF;
             }
             QPushButton:pressed {
-                background-color: #424242;
+                background-color: #606A7A;
+                color: #FFFFFF;
             }
             QPushButton:disabled {
-                background-color: #BDBDBD;
+                background-color: #EBF0F5;
+                color: #8A94A6;
             }
         """)
 
@@ -128,7 +139,6 @@ class KreamTab(QWidget):
 
         self.progress_bar = QProgressBar()
         self.progress_bar.setValue(0)
-        self.progress_bar.setTextVisible(True)
 
         self.log_edit = QTextEdit()
         self.log_edit.setReadOnly(True)
@@ -166,9 +176,24 @@ class KreamTab(QWidget):
 
             # 색상 테마 정의
             themes = {
-                "safe": {"bg": "#E6F4EA", "name": "#1E8E3E", "time": "#000000"},
-                "warning": {"bg": "#FFF8E1", "name": "#E67C00", "time": "#000000"},
-                "danger": {"bg": "#FCE8E6", "name": "#D93025", "time": "#000000"},
+                "safe": {
+                    "bg": "#F0FDFA",
+                    "border": "#0D9488",
+                    "name": "#0D9488",
+                    "time": "#0D254C"
+                },
+                "warning": {
+                    "bg": "#FEFDE8",
+                    "border": "#CA8A04",
+                    "name": "#CA8A04",
+                    "time": "#0D254C"
+                },
+                "danger": {
+                    "bg": "#FEF2F2", 
+                    "border": "#DC2626",
+                    "name": "#DC2626",
+                    "time": "#0D254C"
+                },
             }
 
             if is_expired:
@@ -199,9 +224,9 @@ class KreamTab(QWidget):
 
             # 스타일시트 적용
             self.permission_badge.setStyleSheet(f"""
-                border: 1px solid {theme['name']};
-                border-radius: 5px;
                 background-color: {theme['bg']};
+                border: 1px solid {theme['border']};
+                border-radius: 5px;
             """)
             self.permission_name_label.setStyleSheet(
                 f"font-size: 13px; font-weight: bold; color: {theme['name']}; border: none; background: transparent;"
@@ -213,8 +238,8 @@ class KreamTab(QWidget):
             # 이용권 정보가 없는 경우
             theme = themes["danger"]
             self.permission_badge.setStyleSheet(f"""
-                border: 1px solid {theme['name']};
                 background-color: {theme['bg']};
+                border: 1px solid {theme['border']};
                 border-radius: 5px;
             """)
             self.permission_name_label.setText("이용권 정보 없음")

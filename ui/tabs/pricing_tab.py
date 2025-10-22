@@ -20,11 +20,11 @@ class PricingTab(QWidget):
         main_layout.setSpacing(20)
         
         # === 상단: 타이틀 ===
-        title_label = QLabel("자동화로 지금부터 당신의 시간을 지키세요")
+        title_label = QLabel("자동화로, 당신의 시간을 되찾으세요")
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         title_label.setStyleSheet("""
             QLabel {
-                font-size: 26px;
+                font-size: 28px;
                 font-weight: 600;
                 color: #000b17;
             }
@@ -63,7 +63,7 @@ class PricingTab(QWidget):
         self.email_label.setStyleSheet("""
             QLabel {
                 font-size: 15px;
-                color: #4A90E2;
+                color: #3A86FF;
                 text-decoration: underline;
             }
         """)
@@ -169,7 +169,7 @@ class PricingTab(QWidget):
         self.email_label.setStyleSheet("""
             QLabel {
                 font-size: 13px;
-                color: #4A90E2;
+                color: #3A86FF;
                 text-decoration: underline;
             }
         """)

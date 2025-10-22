@@ -71,7 +71,7 @@ class LoginWindow(QWidget):
                 font-size: 14px;
             }
             QLineEdit:focus {
-                border: 2px solid #4A90E2;
+                border: 2px solid #3A86FF;
             }
         """)
         layout.addWidget(email_label)
@@ -91,7 +91,7 @@ class LoginWindow(QWidget):
                 font-size: 14px;
             }
             QLineEdit:focus {
-                border: 2px solid #4A90E2;
+                border: 2px solid #3A86FF;
             }
         """)
         layout.addWidget(password_label)
@@ -106,7 +106,7 @@ class LoginWindow(QWidget):
         self.login_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.login_button.setStyleSheet("""
             QPushButton {
-                background-color: #4A90E2;
+                background-color: #3A86FF;
                 color: white;
                 border: none;
                 border-radius: 5px;
@@ -114,10 +114,10 @@ class LoginWindow(QWidget):
                 font-weight: bold;
             }
             QPushButton:hover {
-                background-color: #357ABD;
+                background-color: #5093FF;
             }
             QPushButton:pressed {
-                background-color: #2868A8;
+                background-color: #3174DE;
             }
         """)
         self.login_button.clicked.connect(self._handle_login)
@@ -135,14 +135,14 @@ class LoginWindow(QWidget):
         self.register_link.setCursor(Qt.CursorShape.PointingHandCursor)
         self.register_link.setStyleSheet("""
             QPushButton {
-                color: #4A90E2;
+                color: #3A86FF;
                 border: none;
                 text-decoration: underline;
                 font-size: 13px;
                 padding: 0;
             }
             QPushButton:hover {
-                color: #357ABD;
+                color: #5093FF;
             }
         """)
         self.register_link.clicked.connect(self._show_register_page)
@@ -191,7 +191,7 @@ class LoginWindow(QWidget):
                 font-size: 14px;
             }
             QLineEdit:focus {
-                border: 2px solid #4A90E2;
+                border: 2px solid #3A86FF;
             }
         """)
         layout.addWidget(email_label)
@@ -211,7 +211,7 @@ class LoginWindow(QWidget):
                 font-size: 14px;
             }
             QLineEdit:focus {
-                border: 2px solid #4A90E2;
+                border: 2px solid #3A86FF;
             }
         """)
         layout.addWidget(password_label)
@@ -231,7 +231,7 @@ class LoginWindow(QWidget):
                 font-size: 14px;
             }
             QLineEdit:focus {
-                border: 2px solid #4A90E2;
+                border: 2px solid #3A86FF;
             }
         """)
         layout.addWidget(confirm_password_label)
@@ -246,7 +246,7 @@ class LoginWindow(QWidget):
         self.register_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.register_button.setStyleSheet("""
             QPushButton {
-                background-color: #4A90E2;
+                background-color: #3A86FF;
                 color: white;
                 border: none;
                 border-radius: 5px;
@@ -254,10 +254,10 @@ class LoginWindow(QWidget):
                 font-weight: bold;
             }
             QPushButton:hover {
-                background-color: #357ABD;
+                background-color: #5093FF;
             }
             QPushButton:pressed {
-                background-color: #2868A8;
+                background-color: #3174DE;
             }
         """)
         self.register_button.clicked.connect(self._handle_register)
@@ -275,14 +275,14 @@ class LoginWindow(QWidget):
         self.back_link.setCursor(Qt.CursorShape.PointingHandCursor)
         self.back_link.setStyleSheet("""
             QPushButton {
-                color: #4A90E2;
+                color: #3A86FF;
                 border: none;
                 text-decoration: underline;
                 font-size: 13px;
                 padding: 0;
             }
             QPushButton:hover {
-                color: #357ABD;
+                color: #5093FF;
             }
         """)
         self.back_link.clicked.connect(self._show_login_page)

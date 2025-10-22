@@ -56,28 +56,31 @@ class MainWindow(QMainWindow):
         self.tabs.setStyleSheet("""
             QTabWidget::pane {
                 border-radius: 5px;
-                background-color: #eff5ff;
+                background-color: #FFFFFF;
             }
             QTabBar::tab {
-                background-color: #eff5ff;
-                color: #0e2b5e;
+                background-color: #FFFFFF;
+                color: #0D254C;
                 padding: 8px 16px;
                 margin-right: 2px;
                 border-top-left-radius: 4px;
                 border-top-right-radius: 4px;
+                border-bottom: 1px solid #EBF0F5;
             }
             QTabBar::tab:selected {
-                background-color: #1d56bc;
-                color: white;
+                background-color: transparent;
+                color: #3A86FF;
+                border-bottom: 2px solid #3A86FF;
                 font-weight: bold;
             }
             QTabBar::tab:hover {
-                background-color: #1d56bc;
-                color: white;
+                background-color: #EBF0F5;
+                color: #0D254C;
             }
             QTabBar::tab:disabled {
-                background-color: #e0e0e0;
-                color: #999999;
+                background: transparent;
+                color: #8A94A6;
+                opacity: 0.5;
             }
         """)
         
