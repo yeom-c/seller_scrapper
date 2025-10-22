@@ -59,7 +59,7 @@ class MainWindow(QMainWindow):
                 background-color: #FFFFFF;
             }
             QTabBar::tab {
-                background-color: #FFFFFF;
+                background-color: #EBF0F5;
                 color: #0D254C;
                 padding: 8px 16px;
                 margin-right: 2px;
@@ -68,14 +68,15 @@ class MainWindow(QMainWindow):
                 border-bottom: 1px solid #EBF0F5;
             }
             QTabBar::tab:selected {
-                background-color: transparent;
+                background-color: #FFFFFF;
                 color: #3A86FF;
                 border-bottom: 2px solid #3A86FF;
                 font-weight: bold;
             }
             QTabBar::tab:hover {
                 background-color: #EBF0F5;
-                color: #0D254C;
+                color: #3A86FF;
+                font-weight: bold;
             }
             QTabBar::tab:disabled {
                 background: transparent;

@@ -147,7 +147,7 @@ class KreamTab(QWidget):
                 border: 1px solid #e2e8f0;
                 border-radius: 5px;
                 padding: 8px;
-                background-color: white;
+                background-color: #FFFFFF;
             }
         """)
 

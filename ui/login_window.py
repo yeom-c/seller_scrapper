@@ -39,8 +39,8 @@ class LoginWindow(QWidget):
         main_layout.addWidget(self.stacked_widget)
         self.setLayout(main_layout)
         
-        # 메인 윈도우 배경색 설정
-        self.setStyleSheet("background-color: white;")
+        # 메인 윈도우 배경색, 폰트색 설정
+        self.setStyleSheet("background-color: #FFFFFF; color: #0D254C;")
     
     def _create_login_page(self):
         """로그인 페이지 생성."""
@@ -107,7 +107,7 @@ class LoginWindow(QWidget):
         self.login_button.setStyleSheet("""
             QPushButton {
                 background-color: #3A86FF;
-                color: white;
+                color: #FFFFFF;
                 border: none;
                 border-radius: 5px;
                 font-size: 15px;
@@ -247,7 +247,7 @@ class LoginWindow(QWidget):
         self.register_button.setStyleSheet("""
             QPushButton {
                 background-color: #3A86FF;
-                color: white;
+                color: #FFFFFF;
                 border: none;
                 border-radius: 5px;
                 font-size: 15px;

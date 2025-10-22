@@ -15,9 +15,15 @@ class PricingTab(QWidget):
     def _setup_ui(self):
         """탭의 UI 요소들을 생성하고 배치합니다."""
         
+        # 메인 윈도우 배경색, 폰트색 설정
+        self.setStyleSheet("background-color: #FFFFFF; color: #0D254C;")
+
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(10, 10, 10, 10)
         main_layout.setSpacing(20)
+        
+        # 상단 여백 추가
+        main_layout.addSpacing(20)
         
         # === 상단: 타이틀 ===
         title_label = QLabel("자동화로, 당신의 시간을 되찾으세요")
@@ -26,14 +32,13 @@ class PricingTab(QWidget):
             QLabel {
                 font-size: 28px;
                 font-weight: 600;
-                color: #000b17;
             }
         """)
         
         main_layout.addWidget(title_label)
         
         # === 서브 타이틀: 기능 요청 안내 ===
-        subtitle_label = QLabel("언제든 필요한 기능을 요청해주세요\n성심껏 한줄 한줄 코딩하겠습니다!\n⌨️⌨️⌨️")
+        subtitle_label = QLabel("필요한 기능이 있으면 언제든 요청해주세요\n성심껏 한줄 한줄 코딩해드릴게요!\n⌨️⌨️⌨️")
         subtitle_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         subtitle_label.setStyleSheet("""
             QLabel {
@@ -55,7 +60,6 @@ class PricingTab(QWidget):
         contact_label.setStyleSheet("""
             QLabel {
                 font-size: 15px;
-                color: #000b17;
             }
         """)
         
@@ -277,12 +281,12 @@ class PricingTab(QWidget):
         # 모든 카드 동일한 스타일
         card.setStyleSheet("""
             QWidget {
-                background-color: white;
-                border: 1px solid #edf1f5;
+                background-color: #FFFFFF;
+                border: 1px solid #cdd7e4;
                 border-radius: 5px;
             }
             QWidget:hover {
-                border: 1px solid #cdd7e4;
+                border: 1px solid #2a5c96;
             }
         """)
         
