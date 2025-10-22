@@ -67,7 +67,7 @@ class LoginWindow(QWidget):
             QLineEdit {
                 padding: 8px;
                 border: 1px solid #ddd;
-                border-radius: 4px;
+                border-radius: 5px;
                 font-size: 14px;
             }
             QLineEdit:focus {
@@ -87,7 +87,7 @@ class LoginWindow(QWidget):
             QLineEdit {
                 padding: 8px;
                 border: 1px solid #ddd;
-                border-radius: 4px;
+                border-radius: 5px;
                 font-size: 14px;
             }
             QLineEdit:focus {
@@ -109,7 +109,7 @@ class LoginWindow(QWidget):
                 background-color: #4A90E2;
                 color: white;
                 border: none;
-                border-radius: 4px;
+                border-radius: 5px;
                 font-size: 15px;
                 font-weight: bold;
             }
@@ -187,7 +187,7 @@ class LoginWindow(QWidget):
             QLineEdit {
                 padding: 8px;
                 border: 1px solid #ddd;
-                border-radius: 4px;
+                border-radius: 5px;
                 font-size: 14px;
             }
             QLineEdit:focus {
@@ -207,7 +207,7 @@ class LoginWindow(QWidget):
             QLineEdit {
                 padding: 8px;
                 border: 1px solid #ddd;
-                border-radius: 4px;
+                border-radius: 5px;
                 font-size: 14px;
             }
             QLineEdit:focus {
@@ -227,7 +227,7 @@ class LoginWindow(QWidget):
             QLineEdit {
                 padding: 8px;
                 border: 1px solid #ddd;
-                border-radius: 4px;
+                border-radius: 5px;
                 font-size: 14px;
             }
             QLineEdit:focus {
@@ -249,7 +249,7 @@ class LoginWindow(QWidget):
                 background-color: #4A90E2;
                 color: white;
                 border: none;
-                border-radius: 4px;
+                border-radius: 5px;
                 font-size: 15px;
                 font-weight: bold;
             }

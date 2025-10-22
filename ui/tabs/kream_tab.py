@@ -135,7 +135,7 @@ class KreamTab(QWidget):
         self.log_edit.setStyleSheet("""
             QTextEdit {
                 border: 1px solid #e2e8f0;
-                border-radius: 8px;
+                border-radius: 5px;
                 padding: 8px;
                 background-color: white;
             }
@@ -199,25 +199,28 @@ class KreamTab(QWidget):
 
             # 스타일시트 적용
             self.permission_badge.setStyleSheet(f"""
-                QWidget {{
-                    background-color: {theme['bg']};
-                    border-radius: 8px;
-                }}
+                border: 1px solid {theme['name']};
+                border-radius: 5px;
+                background-color: {theme['bg']};
             """)
             self.permission_name_label.setStyleSheet(
-                f"font-size: 13px; font-weight: bold; color: {theme['name']};"
+                f"font-size: 13px; font-weight: bold; color: {theme['name']}; border: none; background: transparent;"
             )
             self.permission_time_label.setStyleSheet(
-                f"font-size: 12px; color: {theme['time']};"
+                f"font-size: 12px; color: {theme['time']}; border: none; background: transparent;"
             )
         else:
             # 이용권 정보가 없는 경우
             theme = themes["danger"]
-            self.permission_badge.setStyleSheet(f"background-color: {theme['bg']}; border-radius: 8px;")
+            self.permission_badge.setStyleSheet(f"""
+                border: 1px solid {theme['name']};
+                background-color: {theme['bg']};
+                border-radius: 5px;
+            """)
             self.permission_name_label.setText("이용권 정보 없음")
-            self.permission_name_label.setStyleSheet(f"font-size: 13px; font-weight: bold; color: {theme['name']};")
+            self.permission_name_label.setStyleSheet(f"font-size: 13px; font-weight: bold; color: {theme['name']}; border: none; background: transparent;")
             self.permission_time_label.setText("기능을 사용할 수 없습니다.")
-            self.permission_time_label.setStyleSheet(f"font-size: 11px; color: {theme['time']};")
+            self.permission_time_label.setStyleSheet(f"font-size: 11px; color: {theme['time']}; border: none; background: transparent;")
             self.start_button.setEnabled(False)
 
     def _emit_start_signal(self):

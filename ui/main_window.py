@@ -52,6 +52,35 @@ class MainWindow(QMainWindow):
         main_layout.setContentsMargins(10, 10, 10, 10)
         self.tabs = QTabWidget()
         
+        # 탭 바 스타일 설정
+        self.tabs.setStyleSheet("""
+            QTabWidget::pane {
+                border-radius: 5px;
+                background-color: #eff5ff;
+            }
+            QTabBar::tab {
+                background-color: #eff5ff;
+                color: #0e2b5e;
+                padding: 8px 16px;
+                margin-right: 2px;
+                border-top-left-radius: 4px;
+                border-top-right-radius: 4px;
+            }
+            QTabBar::tab:selected {
+                background-color: #1d56bc;
+                color: white;
+                font-weight: bold;
+            }
+            QTabBar::tab:hover {
+                background-color: #1d56bc;
+                color: white;
+            }
+            QTabBar::tab:disabled {
+                background-color: #e0e0e0;
+                color: #999999;
+            }
+        """)
+        
         # 탭 바에 손가락 커서 적용
         self.tabs.tabBar().setCursor(Qt.CursorShape.PointingHandCursor)
         

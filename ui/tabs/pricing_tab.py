@@ -26,7 +26,7 @@ class PricingTab(QWidget):
             QLabel {
                 font-size: 26px;
                 font-weight: 600;
-                color: #1a1a1a;
+                color: #000b17;
             }
         """)
         
@@ -55,14 +55,14 @@ class PricingTab(QWidget):
         contact_label.setStyleSheet("""
             QLabel {
                 font-size: 15px;
-                color: #666;
+                color: #000b17;
             }
         """)
         
         self.email_label = QLabel("yun0ga222@gmail.com")
         self.email_label.setStyleSheet("""
             QLabel {
-                font-size: 13px;
+                font-size: 15px;
                 color: #4A90E2;
                 text-decoration: underline;
             }
@@ -153,7 +153,7 @@ class PricingTab(QWidget):
         self.email_label.setText("✓ 복사되었습니다!")
         self.email_label.setStyleSheet("""
             QLabel {
-                font-size: 13px;
+                font-size: 15px;
                 color: #10b981;
                 font-weight: bold;
             }
@@ -211,7 +211,7 @@ class PricingTab(QWidget):
             QLabel {
                 font-size: 24px;
                 font-weight: 700;
-                color: #18355c;
+                color: #000b17;
             }
         """)
         
@@ -219,7 +219,7 @@ class PricingTab(QWidget):
         period_label.setStyleSheet("""
             QLabel {
                 font-size: 14px;
-                color: #64748b;
+                color: #2a5c96;
                 padding-top: 6px;
             }
         """)
@@ -234,7 +234,7 @@ class PricingTab(QWidget):
         # 구분선
         separator = QWidget()
         separator.setFixedHeight(1)
-        separator.setStyleSheet("background-color: #e2e8f0;")
+        separator.setStyleSheet("background-color: #cdd7e4;")
         container_layout.addWidget(separator)
         container_layout.addSpacing(6)
         
@@ -260,7 +260,7 @@ class PricingTab(QWidget):
             feature_label.setStyleSheet("""
                 QLabel {
                     font-size: 14px;
-                    color: #495769;
+                    color: #00162f;
                 }
             """)
             feature_label.setWordWrap(True)
@@ -278,11 +278,11 @@ class PricingTab(QWidget):
         card.setStyleSheet("""
             QWidget {
                 background-color: white;
-                border: 1px solid #e2e8f0;
-                border-radius: 10px;
+                border: 1px solid #edf1f5;
+                border-radius: 5px;
             }
             QWidget:hover {
-                border: 1px solid #cbd5e1;
+                border: 1px solid #cdd7e4;
             }
         """)
         
