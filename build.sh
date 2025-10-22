@@ -7,21 +7,22 @@ echo "======================================"
 echo "Seller Scrapper 빌드 시작"
 echo "======================================"
 
-# 1. 가상환경 확인
-if [ ! -d "venv" ]; then
-    echo "가상환경을 생성합니다..."
-    python3 -m venv venv
+# Python 실행 파일 경로 확인
+PYTHON_PATH="/Users/yeomc/.pyenv/versions/3.13.7/bin/python"
+
+if [ ! -f "$PYTHON_PATH" ]; then
+    echo "❌ Python을 찾을 수 없습니다: $PYTHON_PATH"
+    echo "pyenv를 사용하여 Python 3.13.7을 설치해주세요."
+    exit 1
 fi
 
-# 가상환경 활성화
-echo "가상환경을 활성화합니다..."
-source venv/bin/activate
+echo "✓ Python 경로: $PYTHON_PATH"
 
-# 2. 의존성 설치
-echo "의존성을 설치합니다..."
-pip install --upgrade pip
-pip install -r requirements.txt
-pip install pyinstaller
+# 2. 의존성 확인
+echo "의존성을 확인합니다..."
+$PYTHON_PATH -m pip install --upgrade pip --quiet
+$PYTHON_PATH -m pip install -r requirements.txt --quiet
+$PYTHON_PATH -m pip install pyinstaller --quiet
 
 # 3. 이전 빌드 정리
 echo "이전 빌드 파일을 정리합니다..."
@@ -31,7 +32,7 @@ find . -maxdepth 1 -name "*.spec" ! -name "build_config.spec" -type f -delete
 
 # 4. PyInstaller로 빌드
 echo "PyInstaller로 빌드를 시작합니다..."
-pyinstaller build_config.spec
+$PYTHON_PATH -m PyInstaller build_config.spec
 
 # 5. 결과 확인
 echo ""
