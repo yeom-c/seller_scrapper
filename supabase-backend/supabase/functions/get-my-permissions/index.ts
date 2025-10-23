@@ -43,7 +43,8 @@ Deno.serve(async (req) => {
       )
     }
 
-        // 사용자의 권한 조회 (user_permissions와 permissions, permission_workflows, workflows 조인)
+    // 사용자의 권한 조회 (user_permissions와 permissions, permission_workflows, workflows 조인)
+    // expires_at이 현재 시간보다 큰 권한만 조회 (만료되지 않은 권한)
     const { data: userPermissions, error: queryError } = await supabase
       .from('user_permissions')
       .select(`
@@ -65,6 +66,7 @@ Deno.serve(async (req) => {
         )
       `)
       .eq('user_id', user.id)
+      .gt('expires_at', new Date().toISOString())
       .order('created_at', { ascending: false })
 
     if (queryError) {
