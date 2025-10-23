@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
       )
     }
 
-    // 사용자의 권한 조회 (user_permissions와 permissions, workflows 조인)
+        // 사용자의 권한 조회 (user_permissions와 permissions, permission_workflows, workflows 조인)
     const { data: userPermissions, error: queryError } = await supabase
       .from('user_permissions')
       .select(`
@@ -55,10 +55,12 @@ Deno.serve(async (req) => {
           name,
           type,
           payment_type,
-          workflow:workflows (
-            id,
-            name,
-            workflow_json
+          workflows:permission_workflows (
+            workflow:workflows (
+              id,
+              name,
+              workflow_json
+            )
           )
         )
       `)
@@ -76,13 +78,24 @@ Deno.serve(async (req) => {
       )
     }
 
-    // 응답 데이터 포맷팅
-    const formattedPermissions = userPermissions?.map(up => ({
-      id: up.id,
-      created_at: up.created_at,
-      expires_at: up.expires_at,
-      permission: up.permission
-    })) || []
+    // 응답 데이터 포맷팅 (workflows 배열로 평탄화)
+    const formattedPermissions = userPermissions?.map(up => {
+      // permission_workflows에서 workflow 데이터만 추출
+      const workflows = up.permission?.workflows?.map((pw: any) => pw.workflow) || []
+      
+      return {
+        id: up.id,
+        created_at: up.created_at,
+        expires_at: up.expires_at,
+        permission: {
+          id: up.permission?.id,
+          name: up.permission?.name,
+          type: up.permission?.type,
+          payment_type: up.permission?.payment_type,
+          workflows: workflows
+        }
+      }
+    }) || []
 
     return new Response(
       JSON.stringify({
